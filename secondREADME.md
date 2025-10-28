@@ -138,126 +138,97 @@ Now let's get technical. Here are the core algorithms that implement the scaling
 
 This is the central algorithm—given a fixed compute budget, determine the optimal model size and dataset size.
 
-```
-ALGORITHM ComputeOptimalAllocation
-INPUT:
-    C               // Compute budget in PetaFLOP-days
+**Input:** $C \in \mathbb{R}^+$ (compute budget in PetaFLOP-days)
 
-PARAMETERS:
-    α_N = 0.73      // Scaling exponent: how N scales with C
-    α_D = 0.27      // Scaling exponent: how D scales with C
-    k_N = 0.3       // Hardware-dependent coefficient for parameters
-    k_D = 3.2       // Hardware-dependent coefficient for data
+**Parameters:**
+- $\alpha_N = 0.73$ (scaling exponent: how $N$ scales with $C$)
+- $\alpha_D = 0.27$ (scaling exponent: how $D$ scales with $C$)
+- $k_N = 0.3$ (hardware-dependent coefficient for parameters)
+- $k_D = 3.2$ (hardware-dependent coefficient for data)
 
-OUTPUT:
-    N_optimal       // Optimal number of parameters
-    D_optimal       // Optimal number of training tokens
+**Output:** $(N_{\text{optimal}}, D_{\text{optimal}})$ (optimal parameters and tokens)
 
-BEGIN
-    // Compute optimal model size (parameters)
-    N_optimal ← k_N × C^α_N
+**Algorithm:**
 
-    // Compute optimal dataset size (tokens)
-    D_optimal ← k_D × C^α_D
+1. $N_{\text{optimal}} \leftarrow k_N \times C^{\alpha_N}$ $\triangleright$ Compute optimal model size
+2. $D_{\text{optimal}} \leftarrow k_D \times C^{\alpha_D}$ $\triangleright$ Compute optimal dataset size
+3. $C_{\text{actual}} \leftarrow \frac{6 \times N_{\text{optimal}} \times D_{\text{optimal}}}{10^{15}}$ $\triangleright$ Verify FLOP constraint
+4. **if** $\frac{|C_{\text{actual}} - C|}{C} > 0.1$ **then**
+5. &nbsp;&nbsp;&nbsp;&nbsp;Print "Warning: Allocation deviates from budget by >10%"
+6. **end if**
+7. **return** $(N_{\text{optimal}}, D_{\text{optimal}})$
 
-    // Verify constraint: 6ND ≈ C × 10^15 FLOPs
-    C_actual ← (6 × N_optimal × D_optimal) / 10^15
+**Example:** With $C = 1.0$ PetaFLOP-day:
+- $N_{\text{optimal}} = 0.3 \times 1^{0.73} \approx$ **1.3 billion parameters**
+- $D_{\text{optimal}} = 3.2 \times 1^{0.27} \approx$ **3.2 billion tokens**
 
-    IF |C_actual - C| / C > 0.1 THEN
-        PRINT "Warning: Allocation deviates from budget by >10%"
-    END IF
+**Key Property:** This formula let OpenAI predict GPT-3's performance before spending $4M—accurate to within 0.05 nats!
 
-    RETURN (N_optimal, D_optimal)
-END
-```
-
-**Example**: With C = 1.0 PetaFLOP-day:
-- N_optimal = 0.3 × 1^0.73 ≈ **1.3 billion parameters**
-- D_optimal = 3.2 × 1^0.27 ≈ **3.2 billion tokens**
-
-This formula let OpenAI **predict GPT-3's performance** before spending $4M—accurate to within 0.05 nats!
+---
 
 ### Algorithm 2: Predict Loss from Resources
 
 Given model size and data size, predict the final test loss before training.
 
-```
-ALGORITHM PredictLoss
-INPUT:
-    N               // Number of parameters
-    D               // Number of training tokens
+**Input:**
+- $N \in \mathbb{R}^+$ (number of parameters)
+- $D \in \mathbb{R}^+$ (number of training tokens)
 
-PARAMETERS:
-    N_c = 8.8 × 10^13   // Critical parameter count
-    D_c = 5.4 × 10^13   // Critical token count
-    α_N = 0.076         // Power law exponent for N
-    α_D = 0.095         // Power law exponent for D
+**Parameters:**
+- $N_c = 8.8 \times 10^{13}$ (critical parameter count)
+- $D_c = 5.4 \times 10^{13}$ (critical token count)
+- $\alpha_N = 0.076$ (power law exponent for $N$)
+- $\alpha_D = 0.095$ (power law exponent for $D$)
 
-OUTPUT:
-    L               // Predicted test loss (in nats)
+**Output:** $L \in \mathbb{R}^+$ (predicted test loss in nats)
 
-BEGIN
-    // Compute contribution from parameter constraint
-    term_N ← (N_c / N)^(α_N / α_D)
+**Algorithm:**
 
-    // Compute contribution from data constraint
-    term_D ← (D_c / D)
+1. $\text{term}_N \leftarrow \left(\frac{N_c}{N}\right)^{\alpha_N / \alpha_D}$ $\triangleright$ Parameter constraint contribution
+2. $\text{term}_D \leftarrow \frac{D_c}{D}$ $\triangleright$ Data constraint contribution
+3. $L \leftarrow (\text{term}_N + \text{term}_D)^{\alpha_D}$ $\triangleright$ Bottleneck formula
+4. **return** $L$
 
-    // Combine via addition (bottleneck formula)
-    L ← (term_N + term_D)^α_D
+**Key Property:** Loss is determined by the *bottleneck* resource. If $N$ is too small or $D$ is too small, that constraint dominates.
 
-    RETURN L
-END
-```
+**Complexity:** $O(1)$ - constant time prediction
 
-**Key insight**: Loss is determined by the *bottleneck* resource. If N is too small or D is too small, that constraint dominates.
+---
 
 ### Algorithm 3: Early Stopping Criterion
 
 Determine when to stop training—critical for compute efficiency.
 
-```
-ALGORITHM ShouldStopTraining
-INPUT:
-    N               // Current model size (parameters)
-    S               // Current training step
-    B               // Batch size (tokens per step)
-    C_budget        // Total compute budget (PetaFLOP-days)
+**Input:**
+- $N \in \mathbb{R}^+$ (current model size in parameters)
+- $S \in \mathbb{N}$ (current training step)
+- $B \in \mathbb{N}$ (batch size in tokens per step)
+- $C_{\text{budget}} \in \mathbb{R}^+$ (total compute budget in PetaFLOP-days)
 
-OUTPUT:
-    stop            // Boolean: should stop training?
+**Output:** $\text{stop} \in \{\text{True}, \text{False}\}$ (whether to stop training)
 
-BEGIN
-    // Calculate compute used so far
-    C_used ← (6 × N × B × S) / 10^15
+**Algorithm:**
 
-    // Calculate tokens seen so far
-    tokens_seen ← B × S
+1. $C_{\text{used}} \leftarrow \frac{6 \times N \times B \times S}{10^{15}}$ $\triangleright$ Compute used so far
+2. $\text{tokens}_{\text{seen}} \leftarrow B \times S$ $\triangleright$ Total tokens processed
+3. $(N_{\text{opt}}, D_{\text{opt}}) \leftarrow$ ComputeOptimalAllocation$(C_{\text{budget}})$ $\triangleright$ Get optimal allocations
+4. **if** $C_{\text{used}} \geq C_{\text{budget}}$ **then**
+5. &nbsp;&nbsp;&nbsp;&nbsp;**return** True $\triangleright$ Budget exhausted
+6. **end if**
+7. **if** $N \approx N_{\text{opt}}$ **and** $\text{tokens}_{\text{seen}} \geq D_{\text{opt}}$ **then**
+8. &nbsp;&nbsp;&nbsp;&nbsp;**return** True $\triangleright$ Optimal token count reached
+9. **end if**
+10. **if** $N > 2 \times N_{\text{opt}}$ **then**
+11. &nbsp;&nbsp;&nbsp;&nbsp;Print "Warning: Model too large for budget"
+12. &nbsp;&nbsp;&nbsp;&nbsp;**return** True $\triangleright$ Severely overtrained model
+13. **end if**
+14. **return** False $\triangleright$ Continue training
 
-    // Get optimal allocations for this budget
-    (N_opt, D_opt) ← ComputeOptimalAllocation(C_budget)
+**Key Property:** Traditional practice trains to convergence ($D \to \infty$). Scaling laws say: **stop early**! Training GPT-3 to convergence would waste 100x compute.
 
-    // Stop if budget exhausted
-    IF C_used ≥ C_budget THEN
-        RETURN TRUE
-    END IF
+**Complexity:** $O(1)$ - constant time check per training step
 
-    // Stop if optimal token count reached
-    IF N ≈ N_opt AND tokens_seen ≥ D_opt THEN
-        RETURN TRUE
-    END IF
-
-    // Stop if severely undertrained (N >> N_opt)
-    IF N > 2 × N_opt THEN
-        PRINT "Warning: Model too large for budget"
-        RETURN TRUE
-    END IF
-
-    RETURN FALSE
-END
-```
-
-**Critical observation**: Traditional practice trains to convergence (D → ∞). Scaling laws say: **stop early**! Training GPT-3 to convergence would waste 100x compute.
+---
 
 ### The Architecture Finding
 
@@ -265,9 +236,9 @@ Here's something else that shocked everyone. The paper tested wildly different T
 - A wide, shallow model: 6 layers with 2048 dimensions
 - A narrow, deep model: 48 layers with 512 dimensions
 
-Both had the same total parameter count N. And you know what? They performed **nearly identically**—less than 0.1 nats difference!
+Both had the same total parameter count $N$. And you know what? They performed **nearly identically**—less than 0.1 nats difference!
 
-The conclusion? At fixed N, **architecture details matter far less than everyone thought**. Scale dominates everything.
+**Conclusion:** At fixed $N$, **architecture details matter far less than everyone thought**. Scale dominates everything.
 
 ---
 
