@@ -373,6 +373,8 @@ They trained a model called Chinchilla—70 billion parameters on 1.4 trillion t
 
 They refined the scaling laws to show that N and D should actually scale more equally with C—not the extreme N >> D that the original paper suggested.
 
+**Note:** We'll have another presentation specifically on the Chinchilla paper that will dive much deeper into these revised scaling laws and their implications.
+
 The lesson? The original paper was **directionally correct**—scale matters!—but the quantitative optimum keeps shifting as we test at larger scales. This is healthy scientific iteration. The laws are guides, not gospel.
 
 ### Long-Term Impact: By The Numbers
@@ -493,6 +495,10 @@ Researchers questioned whether compute estimates are correct:
 - Backward pass costs vary by architecture
 - Mixed precision training changes compute accounting
 
+---
+
+**Important Note:** While this paper was groundbreaking in 2020, subsequent research (particularly Chinchilla 2022 and data quality studies) has effectively **disproved several quantitative claims** in this paper, particularly the specific exponent values for optimal allocation ($\alpha_N = 0.73$, $\alpha_D = 0.27$). The directional insights remain valid—scale matters, larger models are sample-efficient—but the exact numbers have been revised. This is a healthy example of scientific progress through empirical refinement.
+
 ### The Bigger Picture
 
 This paper is a **milestone in empirical science**. It doesn't solve the **theory** of deep learning—we still don't know *why* power laws emerge. But it gives us:
@@ -566,8 +572,8 @@ Performance follows power laws. You can forecast performance before spending mil
 **2. Bigger Models Are Sample-Efficient**
 Train large models briefly rather than small models to convergence. The optimal allocation: N grows much faster than D as compute increases.
 
-**3. Architecture Matters Less Than You Think**
-At fixed parameter count, depth and width have minimal impact. For pretraining, focus on scale, not architecture search.
+**3. Architecture SIZE Matters Less Than You Think**
+At fixed parameter count, depth and width have minimal impact. Wide-shallow vs narrow-deep doesn't matter—total parameters $N$ is what counts. However, architecture DESIGN (attention mechanisms, efficiency optimizations) still matters greatly.
 
 ---
 
