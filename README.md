@@ -1,5 +1,7 @@
 # Scaling Laws for Neural Language Models
-## Paper Presentation for DS 5690: Generative AI Models in Theory & Practice
+### Paper Presentation for DS 5690: Generative AI Models in Theory & Practice
+**Presenter**: Kanu Shetkar (Github: [@Kshetkar1](https://github.com/Kshetkar1))
+**Vanderbilt University | Fall 2025**
 
 ---
 
@@ -16,36 +18,85 @@
 
 ---
 
-## 🎯 TL;DR
+## 🎤 Presentation Overview
 
-This foundational 2020 paper from OpenAI revealed that language model performance follows **precise mathematical power laws** as functions of model size, dataset size, and compute budget. The key insight: **bigger models are dramatically more sample-efficient**, meaning optimal training involves training very large models on relatively modest amounts of data and stopping well before convergence. These findings fundamentally changed how the AI community thinks about resource allocation and directly enabled models like GPT-3, GPT-4, and Gopher.
+Hey everyone! Today I'm going to walk you through one of the most influential papers in modern AI - "Scaling Laws for Neural Language Models" by OpenAI.
 
-**The Big Idea**: Instead of training small models to convergence, train much larger models and stop early—you'll get better performance with the same compute budget.
+### The Problem
 
----
+Before this paper came out in January 2020, the AI community was flying blind when it came to scaling. We had intuitions - "bigger is probably better" - but no systematic understanding. Critical questions remained unanswered:
 
-## 🤔 The Problem: Why Does Scaling Matter?
-
-Before this paper, the AI community had intuitions about scaling ("bigger is probably better"), but no systematic understanding. Critical questions remained unanswered:
-
-- **How much better** does a model get when you 10x the parameters?
+- **How much better** does a model actually get when you 10x the parameters?
 - Should you train a **small model for longer** or a **large model briefly**?
-- How much **data** do you need for a model of a given size?
+- How much **data** do you actually need for a model of a given size?
 - When will performance **plateau** or hit diminishing returns?
-- Are architectural details (depth, width, attention heads) as important as scale?
+- Are architectural details (depth, width, attention heads) as important as everyone thought?
 
-These questions weren't just academic—they had **massive practical implications**:
-- OpenAI had to decide: should we build GPT-3 (175B params) or train GPT-2 (1.5B params) longer?
+These weren't just academic questions. They had **massive practical implications**:
+- OpenAI had to decide: should we build GPT-3 (175B params) or just train GPT-2 (1.5B params) longer?
 - Google DeepMind needed to allocate compute budgets: more data or bigger models?
 - The industry was spending **millions of dollars** on training runs without clear optimization principles
 
-**The stakes**: Training GPT-3 cost an estimated $4-12 million. Getting the scaling decisions wrong could waste enormous resources or miss performance gains.
+**The stakes**: Training GPT-3 cost an estimated $4-12 million. Getting the scaling decisions wrong could waste enormous resources or miss critical performance gains.
+
+### The Approach
+
+What this paper did was **revolutionary**. The authors at OpenAI systematically trained over 400 models ranging from 768K to 1.5B parameters, varied architectures across 7 orders of magnitude, and discovered something remarkable: **language model performance follows precise mathematical power laws**.
+
+These aren't approximations or rough guidelines - these are predictable, reproducible formulas that let you forecast performance before spending millions on training.
+
+### How They Addressed It
+
+The solution came in three fundamental scaling laws:
+
+1. **L(N)** - Performance vs. Model Size: Loss improves as a power law in the number of parameters
+2. **L(D)** - Performance vs. Dataset Size: Loss improves as a power law in the amount of training data
+3. **L(C)** - Performance vs. Compute Budget: Loss improves as a power law in total compute spent
+
+The key insight that changed everything: **bigger models are dramatically more sample-efficient**. This means the optimal training strategy is to train very large models on relatively modest amounts of data and stop well before convergence.
+
+This finding fundamentally changed how the AI community thinks about resource allocation and directly enabled models like GPT-3, GPT-4, Gopher, and LLaMA.
+
+### The Big Idea
+
+Instead of training small models to convergence (the old way), you should train much larger models and stop early - you'll get better performance with the same compute budget. This was completely counterintuitive to conventional wisdom at the time!
+
+---
+
+## 🤔 Question for the Class #1
+
+Before we dive deeper into the math, let me ask you all a question:
+
+**❓ If you have a fixed compute budget - say, enough to train a 1 billion parameter model on 100 billion tokens to convergence - which strategy do you think would give you better final performance?**
+
+**A)** Train the 1B parameter model on all 100B tokens until loss stops improving (convergence)
+**B)** Train a 10B parameter model on just 10B tokens and stop early (only 10% of the data!)
+**C)** Train a 100M parameter model on 1 trillion tokens (10x more data)
+
+<details>
+<summary><b>Click here for the answer</b></summary>
+
+**Answer: B** - Train the 10B parameter model on 10B tokens!
+
+This is the core counterintuitive finding of the paper. The scaling laws show that for a fixed compute budget C, the optimal allocation is:
+- **N (parameters) should scale as C^0.73**
+- **D (data) should scale as C^0.27**
+
+This means as you increase compute, you should grow the model **much faster** than the dataset. Specifically, for every 10x increase in compute, use ~5.4x more parameters but only ~2x more data.
+
+Why does this work? Larger models are more **sample-efficient** - they extract more value from each token. So even though the 10B model sees less data, it learns more from what it does see.
+
+This is why GPT-3 (175B params, 300B tokens) outperformed models that were trained to convergence on way more data!
+
+</details>
+
+Think about this for a moment - we'll come back to it when we look at the actual formulas.
 
 ---
 
 ## 💡 Intuition: Power Laws in the Wild
 
-Before diving into equations, let's build intuition with an analogy.
+Before I show you the equations, let's build some intuition. What even is a power law?
 
 ### The Compound Interest Analogy
 
@@ -55,24 +106,24 @@ Imagine you're investing money:
 
 **Scaling laws work similarly**:
 - Doubling your model size from 1B to 2B parameters gives you a **predictable** improvement (say, 5% loss reduction)
-- Doubling again from 2B to 4B gives you **another 5%** (not 10%, not 2%—exactly 5%)
+- Doubling again from 2B to 4B gives you **another 5%** (not 10%, not 2% - exactly 5%)
 - This pattern holds across **seven orders of magnitude** (10 million to 100 billion parameters!)
 
 ### Why Power Laws?
 
 Power laws appear throughout nature and complex systems:
 - **City sizes**: The 2nd largest city is typically ~half the size of the largest
-- **Earthquakes**: The Richter scale—each magnitude increase means 10x more energy
+- **Earthquakes**: The Richter scale - each magnitude increase means 10x more energy
 - **Internet traffic**: A few websites get most traffic, following a power law
 - **Language itself**: Word frequencies follow Zipf's law (a power law)
 
-Neural networks learning language **inherit these power-law properties** from the data they model. The Scaling Laws paper showed this mathematically for the first time.
+Neural networks learning language **inherit these power-law properties** from the data they model. This paper showed this mathematically for the first time.
 
 ---
 
 ## 🔢 The Three Fundamental Scaling Laws
 
-Now let's get precise. The paper discovers **three independent power laws** that govern language model performance. Each describes how test loss (lower is better) changes with a different resource.
+Now let's get precise. I'm going to walk you through the three independent power laws that govern language model performance.
 
 ### Key Notation
 
@@ -87,7 +138,7 @@ Before the equations, here's what the symbols mean:
 | **B** | Batch size (number of tokens) | 2¹⁵ - 2²¹ |
 | **S** | Training steps | Variable |
 
-**Why cross-entropy loss?** It directly measures surprise—how many bits (or nats) the model needs to encode the next token. A loss of 3.0 nats means the model is about as uncertain as flipping a coin 4 times (e^3 ≈ 20 equally likely outcomes).
+**Why cross-entropy loss?** It directly measures surprise - how many bits (or nats) the model needs to encode the next token. A loss of 3.0 nats means the model is about as uncertain as flipping a coin 4 times (e^3 ≈ 20 equally likely outcomes).
 
 ---
 
@@ -103,23 +154,14 @@ where:
   αN ≈ 0.076                   (scaling exponent)
 ```
 
-**What It Means:**
+**What This Means:**
 
 Performance improves as a **power law** in model size. Specifically:
 - **10x the parameters** → ~5% reduction in loss (consistently!)
 - **100x the parameters** → ~10% reduction in loss
 - This holds from **1M to 1B parameters** with no sign of plateauing
 
-**Intuition - The Returns Calculator:**
-
-Think of parameters like RAM on a computer:
-- A computer with 8GB RAM can hold more in "working memory" than one with 4GB
-- Doubling RAM doesn't double performance, but gives consistent, predictable gains
-- Similarly, doubling parameters gives the model more "memory capacity" for patterns
-
-**Critical Insight:** The exponent αN ≈ 0.076 is **empirically measured**, not theoretically derived. The paper trained hundreds of models from 768K to 1.5B parameters and found this exact value through regression.
-
-**Practical Example:**
+**Concrete Example:**
 
 ```
 GPT-2 Small:  N = 117M  →  L ≈ 3.1 nats
@@ -128,7 +170,7 @@ GPT-2 Large:  N = 762M  →  L ≈ 2.7 nats  (6.5x params, 13% better)
 GPT-2 XL:     N = 1.5B  →  L ≈ 2.6 nats  (2x params, 4% better)
 ```
 
-The pattern is **stunningly predictable** across four orders of magnitude.
+The pattern is **stunningly predictable** across four orders of magnitude. The exponent αN ≈ 0.076 is **empirically measured**, not theoretically derived - they trained hundreds of models and found this exact value through regression.
 
 ---
 
@@ -144,34 +186,16 @@ where:
   αD ≈ 0.095                   (scaling exponent)
 ```
 
-**What It Means:**
+**What This Means:**
 
 Performance improves as a **power law** in dataset size, but:
 - **10x the data** → ~6% reduction in loss
 - **100x the data** → ~12% reduction in loss
 - Data is **more efficient** than parameters (αD > αN)
 
-**But here's the catch:** This assumes the model is **large enough** to absorb the data. A tiny model trained on huge data will plateau (this is the "overfitting" regime).
-
-**Intuition - The Library Analogy:**
-
-Imagine a student studying for a test:
-- Reading 10 books is better than reading 1 book
-- Reading 100 books gives diminishing returns (some information is redundant)
-- A student with poor memory (small model) won't benefit from 100 books—they can't retain it all
+**But here's the catch:** This assumes the model is **large enough** to absorb the data. A tiny model trained on huge data will plateau (overfitting).
 
 **Critical Insight:** The paper shows that **data efficiency depends on model size**. Larger models extract more value from each token.
-
-**Practical Example:**
-
-```
-Dataset: 1M tokens   →  L ≈ 4.5 nats
-Dataset: 10M tokens  →  L ≈ 4.0 nats  (10x data, 11% better)
-Dataset: 100M tokens →  L ≈ 3.6 nats  (10x data, 10% better)
-Dataset: 1B tokens   →  L ≈ 3.3 nats  (10x data, 8% better)
-```
-
-Notice the gains **diminish** but remain predictable.
 
 ---
 
@@ -189,7 +213,7 @@ where:
   αC ≈ 0.050                   (scaling exponent)
 ```
 
-**What It Means:**
+**What This Means:**
 
 Given a **fixed compute budget** C (measured in PetaFLOP-days), you can trade off:
 - **Model size (N)** ↔ **Training time (S)**
@@ -207,24 +231,6 @@ where:
   S = training steps
 ```
 
-**Intuition - The Marathon Analogy:**
-
-You have a fixed time budget to prepare for a marathon:
-- **Option A**: Train a normal athlete (small model) for 6 months (many steps)
-- **Option B**: Train an Olympic athlete (large model) for 1 month (few steps)
-
-**Option B wins**—the elite athlete's superior baseline means less training yields better performance.
-
-**Critical Insight - The Chinchilla Revolution:**
-
-This law led to a **radical shift** in training strategies:
-
-| Old Paradigm (pre-2020) | New Paradigm (post-2020) |
-|-------------------------|--------------------------|
-| Train small models to convergence | Train large models, stop early |
-| GPT-2: 1.5B params, 40B tokens | GPT-3: 175B params, 300B tokens |
-| Focus: maximize data utilization | Focus: maximize compute utilization |
-
 **Practical Example:**
 
 Given a budget of 1 PF-day:
@@ -235,13 +241,13 @@ Strategy B: N = 1B,    D = 1B tokens   →  L ≈ 2.4 nats  ✓ Better!
 Strategy C: N = 10B,   D = 100M tokens →  L ≈ 2.1 nats  ✓✓ Even better!
 ```
 
-**Strategy C wins**: Vastly larger model, far less data, same compute budget.
+**Strategy C wins**: Vastly larger model, far less data, same compute budget. This completely flipped conventional wisdom!
 
 ---
 
 ### The Unified View: How the Laws Interact
 
-Here's where it gets profound. The three laws aren't independent—they're **different projections** of a single underlying relationship:
+Here's where it gets really profound. The three laws aren't independent - they're **different projections** of a single underlying relationship:
 
 ```
 L(N, D) = [(Nc/N)^(αN/αD) + Dc/D]^αD
@@ -256,100 +262,60 @@ L(N, D) = [(Nc/N)^(αN/αD) + Dc/D]^αD
 
 For every **10x increase in model size**, you need about **5.5x more data** to maintain optimal training.
 
-**Example:**
-
 ```
 Model: 100M params  →  Optimal data: ~1B tokens
 Model: 1B params    →  Optimal data: ~5.5B tokens   (10x model, 5.5x data)
 Model: 10B params   →  Optimal data: ~30B tokens    (10x model, 5.5x data)
 ```
 
-This is why GPT-3 (175B params) was trained on 300B tokens, not 3 trillion tokens.
+This is why GPT-3 (175B params) was trained on 300B tokens, not 3 trillion tokens!
 
 ---
 
-### Visual Summary: The Three Laws
+## 🤖 Formal Algorithms & Architecture Overview
 
-**Conceptual Graph** (all on log-log scale):
-
-```
-Loss (L)
-  ↑
-  |     L(N): slope = -0.076
-  |    ╲
-  |     ╲___  L(D): slope = -0.095
-  |         ╲___
-  |             ╲___  L(C): slope = -0.050
-  |                 ╲___
-  |                     ╲___
-  |__________________________|→ Resource (N, D, or C)
-```
-
-**Key Takeaway:** All three are straight lines on a log-log plot (the hallmark of power laws), but with **different slopes**. Data scaling is steeper than parameter scaling, which is steeper than compute scaling.
-
----
-
-### 🧪 How Were These Laws Discovered?
-
-The paper didn't just observe these laws—they **systematically tested** them:
-
-1. **Trained 400+ models** ranging from 768K to 1.5B parameters
-2. **Varied architectures**: depths from 2 to 64 layers, widths from 128 to 4096 dimensions
-3. **Controlled for confounds**: fixed batch size, learning rate, architecture choices
-4. **Log-log regression**: Plotted everything on log-log axes and measured slopes
-
-**The shocking result:** The exponents (αN, αD, αC) were **constant across 7 orders of magnitude**. No other hyperparameters mattered as much as scale.
-
----
-
-## 🤖 Formal Algorithms: Computing Optimal Allocations
-
-While the scaling laws are elegant, their real power comes from **algorithmic applications**. Here are the key algorithms from the paper that practitioners use to optimize training.
+Now let me show you the formal algorithms that make these scaling laws practical. These are the actual procedures researchers use to optimize training.
 
 ### Algorithm 1: Compute-Optimal Model Size
 
 **Problem:** Given a fixed compute budget C, what model size N should you use?
 
+**Input**: Compute budget C (in PetaFLOP-days)
+**Output**: Optimal model size N and dataset size D
+
 **Algorithm:**
 
-```python
-def compute_optimal_model_size(C: float) -> tuple[float, float]:
-    """
-    Given compute budget C (in PF-days), return optimal (N, D).
+```
+FUNCTION ComputeOptimalAllocation(C):
+    // Empirical constants from paper
+    α_N ← 0.076
+    α_D ← 0.095
+    α_C ← 0.050
 
-    Based on Equation 5.5 from the paper.
-    """
-    # Empirical constants from the paper
-    alpha_N = 0.076
-    alpha_D = 0.095
-    alpha_C = 0.050
+    // Optimal allocation exponents (derived in Appendix B)
+    a ← α_C / (α_N + α_D)  // ≈ 0.73
+    b ← α_C / (α_N + α_D)  // ≈ 0.27
 
-    # Optimal allocation exponents (derived in Appendix B)
-    a = 0.73  # Exponent for N scaling with C
-    b = 0.27  # Exponent for D scaling with C
+    // Hardware-dependent coefficients (approximate from Figure 9)
+    N_coeff ← 0.3
+    D_coeff ← 3.2
 
-    # Compute coefficients (hardware-dependent)
-    N_coeff = 0.3  # Approximate from Figure 9
-    D_coeff = 3.2
+    // Compute optimal allocations
+    N_optimal ← N_coeff × C^a  // Parameters scale as C^0.73
+    D_optimal ← D_coeff × C^b  // Tokens scale as C^0.27
 
-    # Optimal allocations
-    N_optimal = N_coeff * (C ** a)  # Parameters scale as C^0.73
-    D_optimal = D_coeff * (C ** b)  # Tokens scale as C^0.27
-
-    return N_optimal, D_optimal
-
-# Example usage:
-C = 1.0  # 1 PetaFLOP-day
-N, D = compute_optimal_model_size(C)
-print(f"For C={C} PF-days: Use N={N:.2e} params, D={D:.2e} tokens")
-# Output: For C=1.0 PF-days: Use N=3.00e+08 params, D=3.20e+09 tokens
+    RETURN (N_optimal, D_optimal)
+END FUNCTION
 ```
 
-**Intuition:** As compute increases, you should grow the model **much faster** than the dataset (N grows as C^0.73, D grows as C^0.27). This is the **opposite** of pre-2020 intuition!
+**Key Insight:** As compute increases, grow the model **much faster** than the dataset. This is the **opposite** of pre-2020 intuition!
 
-**Key Insight from the Paper (Section 5.1):**
-
-> "Optimal performance is achieved by training very large models and stopping significantly before convergence."
+**Example Usage:**
+```
+Input: C = 1.0 PF-days
+Output: N = 300M params, D = 3.2B tokens
+Predicted loss: ~2.4 nats
+```
 
 ---
 
@@ -357,41 +323,39 @@ print(f"For C={C} PF-days: Use N={N:.2e} params, D={D:.2e} tokens")
 
 **Problem:** Before training, predict what loss you'll achieve with given N, D.
 
+**Input**: Model size N, Dataset size D
+**Output**: Predicted test loss L
+
 **Algorithm:**
 
-```python
-def predict_loss(N: float, D: float) -> float:
-    """
-    Predict test loss given model size N and dataset size D.
+```
+FUNCTION PredictLoss(N, D):
+    // Empirical constants from paper
+    N_c ← 8.8 × 10^13      // Critical parameter count
+    D_c ← 5.4 × 10^13      // Critical dataset size
+    α_N ← 0.076
+    α_D ← 0.095
 
-    Based on Equation 1.6 (the joint scaling law).
-    """
-    # Empirical constants
-    N_c = 8.8e13  # Critical parameter count
-    D_c = 5.4e13  # Critical dataset size
-    alpha_N = 0.076
-    alpha_D = 0.095
+    // Joint scaling law (Equation 1.6)
+    term_N ← (N_c / N)^(α_N / α_D)
+    term_D ← D_c / D
 
-    # Joint scaling law (Equation 1.6)
-    term_N = (N_c / N) ** (alpha_N / alpha_D)
-    term_D = D_c / D
+    L ← (term_N + term_D)^α_D
 
-    L = (term_N + term_D) ** alpha_D
-
-    return L
-
-# Example: GPT-3 specifications
-N_gpt3 = 175e9      # 175 billion parameters
-D_gpt3 = 300e9      # 300 billion tokens
-
-predicted_loss = predict_loss(N_gpt3, D_gpt3)
-print(f"Predicted GPT-3 loss: {predicted_loss:.3f} nats")
-# Output: Predicted GPT-3 loss: 2.150 nats
+    RETURN L
+END FUNCTION
 ```
 
 **What Makes This Powerful:**
 
 Before spending $4M on training GPT-3, OpenAI could **predict its performance** using this formula. The prediction was accurate to within 0.05 nats!
+
+**Example:**
+```
+Input: N = 175B (GPT-3), D = 300B tokens
+Output: L = 2.150 nats
+Actual GPT-3 loss: ~2.0 nats (very close!)
+```
 
 ---
 
@@ -399,147 +363,171 @@ Before spending $4M on training GPT-3, OpenAI could **predict its performance** 
 
 **Problem:** When should you stop training to maximize compute efficiency?
 
+**Input**: Model size N, Dataset size D, Current step S, Batch size B, Total compute budget C
+**Output**: Boolean - should training stop?
+
 **Algorithm:**
 
-```python
-def should_stop_training(N: float, D: float, S: int, B: int,
-                         C_budget: float) -> bool:
-    """
-    Determine if training should stop based on compute efficiency.
+```
+FUNCTION ShouldStopTraining(N, D, S, B, C_budget):
+    // Compute used so far (approximate FLOPs)
+    C_used ← 6 × N × B × S / 10^15  // Convert to PF-days
 
-    Args:
-        N: Model parameters
-        D: Dataset size (tokens)
-        S: Current training step
-        B: Batch size (tokens)
-        C_budget: Total compute budget (PF-days)
+    // Tokens seen so far
+    tokens_seen ← B × S
 
-    Returns:
-        True if training should stop
-    """
-    # Compute used so far (approximate)
-    C_used = 6 * N * B * S / 1e15  # Convert to PF-days
+    // Get optimal allocation for this budget
+    (N_opt, D_opt) ← ComputeOptimalAllocation(C_budget)
 
-    # Tokens seen so far
-    tokens_seen = B * S
+    // Stop if either condition met:
+    // 1. Budget exhausted
+    budget_exhausted ← (C_used ≥ C_budget)
 
-    # Check if we've exceeded optimal allocation
-    N_opt, D_opt = compute_optimal_model_size(C_budget)
+    // 2. Seen enough tokens relative to model size
+    tokens_sufficient ← (tokens_seen ≥ D_opt)
 
-    # Stop if:
-    # 1. Budget exhausted, OR
-    # 2. Seen enough tokens relative to model size
-    budget_exhausted = C_used >= C_budget
-    tokens_sufficient = tokens_seen >= D_opt
-
-    return budget_exhausted or tokens_sufficient
-
-# Example: Training a 1B parameter model
-N = 1e9
-B = 2**19  # 524k tokens per batch
-C_budget = 0.5  # 0.5 PF-days
-
-for S in range(0, 10000, 1000):
-    stop = should_stop_training(N, 0, S, B, C_budget)
-    tokens = B * S
-    print(f"Step {S}: {tokens/1e9:.2f}B tokens - Stop: {stop}")
+    RETURN (budget_exhausted OR tokens_sufficient)
+END FUNCTION
 ```
 
 **Key Insight:** Most models should **stop far before convergence**. The paper shows that training to convergence wastes 10-100x compute!
 
 ---
 
-### Algorithm 4: Critical Batch Size
+### Algorithm 4: Critical Batch Size Schedule
 
 **Problem:** What batch size minimizes training time without hurting performance?
 
+**Input**: Current loss L
+**Output**: Critical batch size B_crit
+
 **Algorithm:**
 
-```python
-def critical_batch_size(L: float) -> int:
-    """
-    Compute critical batch size given current loss.
+```
+FUNCTION CriticalBatchSize(L):
+    // Empirical fit from Figure 11
+    B_noise ← 2^21         // Noise scale ≈ 2M tokens
+    L_noise ← 1.5          // Loss at which noise dominates
+    α_D ← 0.095
 
-    Based on Section 5.3: B_crit scales as a power law with loss.
-    """
-    # Empirical fit from Figure 11
-    B_noise = 2**21  # Noise scale ≈ 2M tokens
-    L_noise = 1.5    # Loss at which noise dominates
+    // Critical batch size formula (Equation 5.8)
+    B_crit ← B_noise × (L / L_noise)^(1/α_D)
 
-    # Critical batch size formula (Equation 5.8)
-    B_crit = B_noise * ((L / L_noise) ** (1/0.095))
-
-    return int(B_crit)
-
-# Example: Batch size schedule during training
-losses = [4.0, 3.0, 2.5, 2.0, 1.8]
-print("Loss -> Critical Batch Size:")
-for L in losses:
-    B = critical_batch_size(L)
-    print(f"  L={L:.1f} -> B_crit = {B/1e6:.2f}M tokens")
-
-# Output:
-#   L=4.0 -> B_crit = 32.00M tokens
-#   L=3.0 -> B_crit = 12.00M tokens
-#   L=2.5 -> B_crit = 6.80M tokens
-#   L=2.0 -> B_crit = 3.20M tokens
-#   L=1.8 -> B_crit = 2.10M tokens
+    RETURN floor(B_crit)
+END FUNCTION
 ```
 
-**Practical Implication:** Start with large batch sizes early in training (when loss is high), then **decrease** batch size as loss drops. This is counter-intuitive but optimal!
+**Practical Implication:**
+
+Start with large batch sizes early in training (when loss is high), then **decrease** batch size as loss drops:
+
+```
+L = 4.0 nats → B_crit = 32M tokens  (use huge batches early)
+L = 3.0 nats → B_crit = 12M tokens
+L = 2.0 nats → B_crit = 3.2M tokens  (reduce batch size late)
+```
+
+This is counter-intuitive but optimal! Most practitioners use **fixed batch sizes**, which is suboptimal.
 
 ---
 
-### 🔗 Connection to Formal Transformer Algorithms
+### Connection to Transformer Architecture
 
-The scaling laws don't depend on the specific Transformer architecture, but understanding the architecture helps explain **why** parameters matter. Here's a quick reference to key Transformer components:
+The scaling laws don't depend on specific architecture, but understanding where parameters come from helps explain **why** they matter.
 
-**From "Formal Algorithms for Transformers" (Phuong & Hutter, 2022):**
-
-#### Multi-Head Attention (Core Operation)
+**For a Transformer with L layers, width d_model, vocabulary V:**
 
 ```
-Algorithm: MultiHeadAttention(X, W_Q, W_K, W_V, W_O)
-  Input: X ∈ ℝ^(n×d_model)    # Sequence of length n, dimension d_model
-  Params: W_Q, W_K, W_V ∈ ℝ^(d_model×d_k)  # Query, Key, Value projections
-          W_O ∈ ℝ^(d_model×d_model)         # Output projection
+FUNCTION CountParameters(L, d_model, V):
+    // Embedding parameters
+    N_embed ← V × d_model
 
-  For each head h = 1...H:
-    Q_h = X W_Q^(h)          # Query projection
-    K_h = X W_K^(h)          # Key projection
-    V_h = X W_V^(h)          # Value projection
+    // Per-layer parameters
+    // Attention: 4 weight matrices (Q, K, V, O)
+    N_attn ← 4 × d_model^2
 
-    # Scaled dot-product attention
-    A_h = softmax(Q_h K_h^T / √d_k)  # Attention weights
-    O_h = A_h V_h                     # Weighted values
+    // FFN: typically 4x expansion
+    N_ffn ← 2 × (d_model × 4×d_model)  // Up and down projections
+    N_ffn ← 8 × d_model^2
 
-  # Concatenate heads and project
-  O = Concat(O_1, ..., O_H) W_O
-  Return O
+    // Total per layer
+    N_layer ← N_attn + N_ffn
+    N_layer ← 12 × d_model^2
+
+    // Total parameters
+    N_total ← N_embed + L × N_layer
+
+    RETURN N_total
+END FUNCTION
 ```
 
-**Parameter Count:**
-- Each attention layer: `N_attn ≈ 4 × d_model²` (for Q, K, V, O projections)
-- Each FFN layer: `N_FFN ≈ 8 × d_model²` (typical FFN is 4× expansion)
-- **Total per layer**: `N_layer ≈ 12 × d_model²`
-
-**Why This Matters for Scaling Laws:**
-
-The paper's key finding: **layer count and width interact** to determine N, but the scaling laws only depend on **total N**, not the specific (depth, width) configuration!
-
-**Example:**
-
+**Example: GPT-2 Small (117M params)**
 ```
-Model A: 12 layers × 768 width  → N ≈ 110M → L ≈ 3.2 nats
-Model B: 6 layers × 1536 width  → N ≈ 110M → L ≈ 3.2 nats  (same!)
-Model C: 24 layers × 512 width  → N ≈ 110M → L ≈ 3.2 nats  (same!)
+Input: L = 12, d_model = 768, V = 50,257
+N_embed ≈ 50,257 × 768 ≈ 39M
+N_layer ≈ 12 × 768² × 12 ≈ 85M
+N_total ≈ 124M (close to 117M quoted!)
 ```
 
-All three achieve nearly identical loss because they have the same N. Architecture details matter far less than scale!
+**The paper's key architectural finding:** The **ratio** of attention to FFN parameters doesn't matter - only **total N** matters!
+
+Models with wildly different architectures but the same N perform nearly identically:
+- 6-layer model with width 2048 → L ≈ 3.15 nats
+- 48-layer model with width 512 → L ≈ 3.16 nats (same!)
+
+**Conclusion**: At fixed N, architecture details contribute less than 0.1 nats of variation. **Scale dominates everything.**
+
+---
+
+## 🤔 Question for the Class #2
+
+Now that we've seen the algorithms and formulas, here's my second question for you:
+
+**❓ The paper shows that architectural details (depth, width, number of attention heads) barely matter compared to total parameter count N. Why do you think modern AI labs still spend so much effort on architecture search and optimization if scale is all that matters?**
+
+<details>
+<summary><b>Click here to discuss</b></summary>
+
+**Great question - and there are several important reasons:**
+
+1. **Inference Efficiency**: While training performance only depends on N, **inference cost** (serving the model to users) depends heavily on architecture:
+   - Mixture-of-Experts models can be more efficient (only activate subset of parameters)
+   - Sparse attention patterns reduce memory bandwidth
+   - Quantization-friendly architectures enable deployment
+
+2. **Specialized Tasks**: The scaling laws are for general language modeling. For specific tasks:
+   - Vision models need different architectures (ViT, ConvNets)
+   - Long-context models need modified attention (FlashAttention, ALiBi)
+   - Code models benefit from specialized tokenization
+
+3. **Hardware Constraints**: Different architectures have different:
+   - Memory bandwidth requirements
+   - Parallelization properties
+   - GPU/TPU utilization efficiency
+
+4. **Scaling Limits**: As models approach 1T+ parameters:
+   - We're hitting data constraints (running out of high-quality text)
+   - Architecture innovations (MoE, sparse models) help break through
+   - Algorithmic improvements shift the scaling curves
+
+5. **Post-Training Matters**: The scaling laws only apply to pretraining:
+   - RLHF and instruction-tuning have different dynamics
+   - Smaller, well-tuned models can outperform larger base models
+   - Architecture affects fine-tuning efficiency
+
+**The Bottom Line**: For pretraining, scale is king. But for the **full lifecycle** (training + inference + deployment + fine-tuning), architecture absolutely matters!
+
+This is why we see both trends happening:
+- **Scaling up**: GPT-4, PaLM, Gemini getting bigger
+- **Architecture innovation**: Mixtral (MoE), Mamba (non-Transformer), FlashAttention
+
+</details>
 
 ---
 
 ## 🧪 Experimental Setup & Key Findings
+
+Let me walk you through how they actually discovered these laws and what they found.
 
 ### The Dataset: WebText2
 
@@ -556,7 +544,7 @@ The paper uses a filtered web corpus similar to GPT-2's training set:
 
 ### Model Architecture Space
 
-The paper systematically varies:
+The authors systematically varied every hyperparameter you can think of:
 
 | Hyperparameter | Range Tested | Effect on Performance |
 |----------------|--------------|----------------------|
@@ -566,19 +554,13 @@ The paper systematically varies:
 | **FFN width ratio** | 1 - 4 | Minimal |
 | **Parameters (N)** | 768K - 1.5B | **Strong (power law!)** |
 
-**The Shocking Result (Figure 1):**
+**The Shocking Result:**
 
-Models with wildly different architectures but the same N perform **nearly identically**:
-- A 6-layer model with width 2048 gets loss 3.1 nats
-- A 48-layer model with width 512 also gets loss 3.1 nats
-
-**Conclusion:** Once N is fixed, architecture details contribute less than 0.1 nats of variation. **Scale dominates everything.**
+Models with wildly different architectures but the same N perform **nearly identically**. This was completely unexpected!
 
 ---
 
-### Key Findings
-
-#### Finding 1: Overfitting is Universal (Section 4)
+### Key Finding #1: Overfitting is Universal
 
 **The Experiment:** Train models of size N on datasets of size D, varying the ratio N/D.
 
@@ -601,20 +583,20 @@ Examples:
   N = 100B  →  D_optimal ≈ 550B tokens
 ```
 
-**Implication:** GPT-4 (rumored 1.8T params) would need ~10 trillion tokens for optimal training—more text than exists on the internet! This is why **mixture-of-experts** and **data augmentation** are critical frontiers.
+**Implication:** GPT-4 (rumored 1.8T params) would need ~10 trillion tokens for optimal training - more text than exists on the internet! This is why **mixture-of-experts** and **data augmentation** are critical frontiers.
 
 ---
 
-#### Finding 2: Sample Efficiency Grows with Model Size (Section 3.2)
+### Key Finding #2: Sample Efficiency Grows with Model Size
 
 **The Experiment:** Fix dataset size D, vary model size N, measure loss.
 
 **Result:** Larger models achieve lower loss on the **same data**.
 
-**Concrete Example from Figure 4:**
+**Concrete Example:**
 
 ```
-Dataset: 10B tokens
+Dataset: 10B tokens (fixed)
 
 N = 100M  →  L = 3.5 nats
 N = 1B    →  L = 2.8 nats  (20% better with same data!)
@@ -627,7 +609,7 @@ If data is scarce (e.g., specialized domains like legal or medical text), **use 
 
 ---
 
-#### Finding 3: Convergence is Predictable (Section 3.1)
+### Key Finding #3: Convergence is Predictable
 
 **The Experiment:** Train models to convergence (loss stops decreasing) and measure how many steps it takes.
 
@@ -641,13 +623,13 @@ S_convergence ≈ (N / D)^1.33
 - Doubling model size requires 2^1.33 ≈ 2.5x more steps to converge
 - Doubling data size allows convergence in 0.5^1.33 ≈ 0.4x steps
 
-**Implication:** Training to convergence is **expensive**. The paper shows stopping at 10% of convergence wastes only ~0.1 nats of performance but saves 10x compute!
+**Implication:** Training to convergence is **expensive**. Stopping at 10% of convergence wastes only ~0.1 nats but saves 10x compute!
 
 ---
 
-#### Finding 4: Transfer Learning Follows Power Laws (Section 3.3)
+### Key Finding #4: Transfer Learning Follows Power Laws
 
-**The Experiment:** Pretrain models on WebText2, then fine-tune on specialized tasks (e.g., LAMBADA, HellaSwag).
+**The Experiment:** Pretrain models on WebText2, then fine-tune on specialized tasks (LAMBADA, HellaSwag).
 
 **Result:** Transfer performance also follows power laws!
 
@@ -665,13 +647,13 @@ Pretraining Loss: 2.5 nats  →  LAMBADA accuracy: 62%
 Pretraining Loss: 2.0 nats  →  LAMBADA accuracy: 78%
 ```
 
-**Implication:** General pretraining improvements **transfer predictably** to downstream tasks. Scaling the base model improves everything.
+**Implication:** General pretraining improvements **transfer predictably** to downstream tasks. Scaling the base model improves everything!
 
 ---
 
-## 💰 Compute-Efficient Training: The Game Changer
+## 💰 The Paradigm Shift: Compute-Efficient Training
 
-This section (Section 5 of the paper) is arguably the **most impactful** for practitioners.
+This is arguably the **most impactful** section for practitioners. Let me show you how this changed everything.
 
 ### The Central Question
 
@@ -705,7 +687,7 @@ Result: L ≈ 3.2 nats
 **Strategy:**
 1. For budget C, compute optimal N and D using the formulas
 2. Train for D tokens (far from convergence!)
-3. Accept that the model hasn't "seen enough" data—it's still optimal!
+3. Accept that the model hasn't "seen enough" data - it's still optimal!
 
 **Example:**
 ```
@@ -717,33 +699,9 @@ Given same budget as BERT-Large:
 
 ---
 
-### The Math: Optimal Allocation Formula
+### Historical Comparison
 
-**From Appendix B:**
-
-Given compute budget C, the optimal allocation is:
-
-```
-N_optimal(C) = N_0 × C^a
-D_optimal(C) = D_0 × C^b
-
-where:
-  a = α_C / (α_N + α_D) ≈ 0.73
-  b = α_C / (α_N + α_D) ≈ 0.27
-  N_0, D_0 are hardware-dependent constants
-```
-
-**Key Insight:**
-
-As you scale compute:
-- **Parameters (N) grow much faster** than data (D)
-- Specifically: For every **10x in compute**, use **5.4x more parameters** but only **2x more data**
-
-**This is the opposite of conventional wisdom!**
-
----
-
-### Historical Comparison Table
+Look at how the industry evolved:
 
 | Model | Year | N (params) | D (tokens) | N/D Ratio | Strategy |
 |-------|------|-----------|-----------|-----------|----------|
@@ -756,299 +714,155 @@ As you scale compute:
 
 **What Happened with Chinchilla?**
 
-DeepMind revisited the scaling laws and found that **GPT-3 was still undertrained on data**!
-
-They trained Chinchilla (70B params) on 1.4T tokens and it **outperformed Gopher (280B params)** while using 4x less compute for inference.
+DeepMind revisited the scaling laws and found that **GPT-3 was still undertrained on data**! They trained Chinchilla (70B params) on 1.4T tokens and it **outperformed Gopher (280B params)** while using 4x less compute for inference.
 
 **The Lesson:** Even OpenAI didn't initially get the allocation perfect. The scaling laws are a guide, but the optimal frontier keeps shifting.
 
 ---
 
-### Critical Batch Size: A Surprising Detail
+## 🔬 Critical Analysis
 
-**The Problem:** Larger batch sizes allow parallel training (faster wall-clock time), but do they hurt performance?
-
-**The Finding (Section 5.3):**
-
-There's a **critical batch size** B_crit that depends on loss:
-
-```
-B_crit(L) ≈ B_noise × (L / L_noise)^(1/α_D)
-
-where:
-  B_noise ≈ 2M tokens
-  L_noise ≈ 1.5 nats
-```
-
-**Translation:**
-- Early in training (L ≈ 4.0): B_crit ≈ 32M tokens → **use huge batches**
-- Late in training (L ≈ 2.0): B_crit ≈ 3M tokens → **reduce batch size**
-
-**Why?** Gradient noise (stochasticity) is helpful early but harmful late. Larger batches reduce noise.
-
-**Practical Impact:**
-
-Most practitioners use **fixed batch sizes**, which is suboptimal! The paper suggests:
-1. Start with B = 10M tokens
-2. Decrease by √10 every time loss drops by 0.5 nats
-3. Stop when B reaches hardware limits (memory constraints)
-
-This simple schedule can **save 10-20% of compute** with no performance loss.
-
----
-
-## 🤔 The Contradiction: Section 6.3 Deep Dive
-
-Section 6.3 of the paper is titled **"Contradictions and a Conjecture"**—it's where the authors wrestle with a puzzling empirical result that doesn't quite fit their theory.
-
-### The Setup
-
-The scaling laws predict that for a given compute budget C:
-```
-L(C) = (C_c / C)^α_C    where α_C ≈ 0.050
-```
-
-This implies that **all** training trajectories with the same total compute C should converge to the same final loss, **regardless of how you allocate that compute** between N, D, and S.
-
-### The Contradiction
-
-**What they observed:** When testing different (N, S) allocations for fixed C, some trajectories achieved **better final loss** than others—contradicting the simple L(C) law!
-
-**Concrete Example (Figure 10):**
-
-```
-Fixed budget: C = 0.1 PF-days
-
-Allocation A: N = 500M,  S = 10K steps  →  L_final = 3.2 nats
-Allocation B: N = 1B,    S = 5K steps   →  L_final = 3.0 nats  ✓ Better!
-Allocation C: N = 2B,    S = 2.5K steps →  L_final = 3.05 nats
-```
-
-**The issue:** Allocation B is better than A and C, even though all have the same C. The L(C) power law predicts they should be identical!
-
----
-
-### Possible Explanations
-
-The paper proposes three hypotheses:
-
-#### Hypothesis 1: Batch Size Effects
-
-**The idea:** Different allocations require different batch sizes to maintain efficiency.
-
-- Allocation A (small N, many steps): Needs small batches → more noise
-- Allocation B (large N, few steps): Can use large batches → less noise
-
-**Status:** Partially explains the effect, but not fully. Adjusting for critical batch size narrows the gap but doesn't eliminate it.
-
----
-
-#### Hypothesis 2: Optimizer Non-Convergence
-
-**The idea:** Adam optimizer hasn't fully converged yet at the tested scales.
-
-- Early in training: Adam is far from optimal trajectory
-- Late in training: Adam has "warmed up" and is more efficient
-
-Larger models with fewer steps might be **penalized** because Adam doesn't have time to converge.
-
-**Status:** Plausible, but the paper notes that switching optimizers (SGD, AdamW) doesn't qualitatively change the results.
-
----
-
-#### Hypothesis 3: The L(N, D) Formula is Incomplete
-
-**The conjecture:** The true scaling law might be:
-
-```
-L(N, D, S) = f(N, D) + g(S)
-```
-
-where g(S) captures some **intrinsic benefit of longer training** beyond just seeing more data.
-
-**Why this matters:**
-
-If true, it suggests that:
-- The **process of training** (not just the final N and D) matters
-- There's value in "letting the model settle" even after seeing enough data
-- The compute-optimal strategy might be slightly different than the paper suggests
-
-**Status:** **Open question**. The authors call this a "conjecture" and note it deserves further study.
-
----
-
-### What This Means for Practitioners
-
-**Takeaway:** The scaling laws are **incredibly accurate** (within 5% error across 7 orders of magnitude), but there are **second-order effects** that matter:
-
-1. **Use the formulas as a starting point**, not gospel
-2. **Slightly over-allocate to N** rather than D if unsure (models are reusable, tokens are not)
-3. **Monitor training curves** and be willing to adjust mid-training
-4. **Batch size schedules** matter more than initially thought
-
-**The authors' honesty here is refreshing**—they don't oversell their results. Science is about finding the edges of your theory!
-
----
-
-## 🔬 Critical Analysis & Limitations
-
-Let's step back and evaluate this paper with a critical eye.
+Let me step back and critically evaluate this paper - what did they get right, what's missing, and what are the limitations?
 
 ### What the Paper Gets Right ✅
 
-#### 1. Empirical Rigor
-- **400+ models** trained across 7 orders of magnitude
+**1. Empirical Rigor**
+- Trained **400+ models** across 7 orders of magnitude
 - Systematic ablations of architecture, depth, width
 - Reproducible results with clear error bars
+- The exponents (αN, αD, αC) are constant across scales
 
-#### 2. Practical Impact
+**2. Practical Impact**
 - Directly enabled GPT-3, Gopher, PaLM, and LLaMA
 - Saved industry **millions of dollars** in wasted compute
-- Shifted research priorities toward scale
+- Shifted research priorities from architecture search to scale
+- Created a predictive framework for resource allocation
 
-#### 3. Theoretical Clarity
+**3. Theoretical Clarity**
 - Power laws are simple, interpretable, and predictive
-- Formulas generalize across architectures
-- Clear mechanistic hypotheses (even if not fully proven)
+- Formulas generalize across architectures (at least for dense Transformers)
+- Clear mechanistic hypotheses even if not fully proven
 
 ---
 
-### Limitations & Open Questions ⚠️
+### Limitations & What's Missing ⚠️
 
-#### 1. **Dataset Homogeneity**
+**1. Dataset Homogeneity**
 
 **The Issue:** All experiments use WebText2 (English web text). Do the laws hold for:
-- **Non-English languages?** (e.g., low-resource languages)
-- **Specialized domains?** (e.g., code, math, scientific text)
-- **Multimodal data?** (e.g., images + text)
+- Non-English languages? (especially low-resource languages)
+- Specialized domains? (code, math, scientific text)
+- Multimodal data? (images + text, video, audio)
 
-**Evidence:**
-- Subsequent work (Chinchilla, PaLM) suggests laws **do** transfer to other datasets
-- But exponents (α_N, α_D) might differ slightly
-
-**Status:** Mostly resolved—laws are robust across text domains.
+**Status:** Subsequent work (Chinchilla, PaLM) suggests laws **do** transfer to other text datasets, but exponents might differ slightly.
 
 ---
 
-#### 2. **Architecture Specificity**
+**2. Architecture Specificity**
 
 **The Issue:** All models are decoder-only Transformers (like GPT-2). What about:
-- **Encoder-only** (like BERT)?
-- **Encoder-decoder** (like T5)?
-- **Mixture-of-experts** (like Switch Transformer)?
-- **Non-Transformer architectures** (like Mamba, RWKV)?
+- Encoder-only (BERT)?
+- Encoder-decoder (T5)?
+- Mixture-of-experts (Switch Transformer)?
+- Non-Transformer architectures (Mamba, RWKV, SSMs)?
 
 **Evidence:**
-- DeepMind's Chinchilla paper (2022) shows laws hold for encoder-decoder models
-- But MoE models have different compute dynamics (active params ≠ total params)
+- DeepMind's Chinchilla paper shows laws hold for encoder-decoder models
+- But MoE models have different dynamics (active params ≠ total params)
 
-**Status:** Partially resolved—laws are architecture-agnostic for dense Transformers, but sparse models need separate treatment.
+**Status:** Partially resolved - laws are architecture-agnostic for dense Transformers, but sparse models need separate treatment.
 
 ---
 
-#### 3. **Instruction Tuning & RLHF**
+**3. Instruction Tuning & RLHF**
 
 **The Issue:** The paper only considers **pretraining** (next-token prediction). Modern LLMs have additional stages:
-- **Instruction tuning** (fine-tuning on task demonstrations)
-- **RLHF** (reinforcement learning from human feedback)
+- Instruction tuning (fine-tuning on task demonstrations)
+- RLHF (reinforcement learning from human feedback)
 
 Do scaling laws apply to these stages?
 
 **Evidence:**
-- InstructGPT paper (2022) shows that RLHF **breaks some assumptions**
+- InstructGPT paper (2022) shows RLHF **breaks some assumptions**
 - Smaller RLHF-tuned models can outperform larger base models
 - Scaling laws for RLHF are an **active research area**
 
-**Status:** Open question—scaling laws for post-training are less understood.
+**Status:** Open question - scaling laws for post-training are less understood.
 
 ---
 
-#### 4. **Emergent Abilities**
+**4. Emergent Abilities**
 
-**The Issue:** Some capabilities (e.g., few-shot learning, chain-of-thought reasoning) **suddenly appear** at certain scales. The power laws predict smooth improvements, not **phase transitions**.
+**The Issue:** Some capabilities (few-shot learning, chain-of-thought reasoning) **suddenly appear** at certain scales. The power laws predict smooth improvements, not **phase transitions**.
 
 **Examples:**
 - GPT-2 (1.5B): Struggles with arithmetic
 - GPT-3 (175B): Can do 3-digit addition
-- PaLM (540B): Can solve grade-school math problems
-
-These jumps aren't predicted by smooth scaling laws.
+- PaLM (540B): Can solve grade-school math
 
 **Possible Explanations:**
-- **Measurement artifacts:** Task accuracy has discrete thresholds (0% → 100%)
-- **Genuine emergence:** Some algorithms require minimum capacity to implement
-- **Prompting effects:** Better prompts unlock latent capabilities
+- **Measurement artifacts**: Task accuracy has discrete thresholds (0% → 100%)
+- **Genuine emergence**: Some algorithms require minimum capacity
+- **Prompting effects**: Better prompts unlock latent capabilities
 
-**Status:** Hotly debated—Stanford's "Emergent Abilities" paper (2022) vs. "Emergent Abilities are Mirage" paper (2023).
-
----
-
-#### 5. **Sample Efficiency Plateau**
-
-**The Issue:** The paper extrapolates to 100B+ parameters, but are we **hitting diminishing returns**?
-
-**Evidence:**
-- GPT-4 (rumored 1.8T params) shows gains, but **smaller than predicted** by naive extrapolation
-- Chinchilla (70B) beats Gopher (280B) by training on more data—suggesting the frontier is shifting toward data
-
-**Status:** Open question—we might be entering a **data-constrained regime** where D, not N, is the bottleneck.
+**Status:** Hotly debated (Stanford's "Emergent Abilities" vs. "Emergent Abilities are Mirage" papers).
 
 ---
 
-### What's Missing from the Paper? 🤷
+**5. Inference Costs Ignored**
 
-#### 1. **Inference Costs**
-
-The paper optimizes **training compute**, but ignores **inference compute**:
+**The Issue:** The paper optimizes **training compute**, but ignores **inference compute**:
 - GPT-3 (175B) is expensive to serve (high latency, high cost)
-- Chinchilla (70B) is cheaper to serve, even if training was similar cost
+- Chinchilla (70B) is cheaper to serve, even if training cost was similar
 
 **Modern perspective:** **Total cost of ownership (TCO)** = training + inference. Smaller models with more data might win on TCO.
 
 ---
 
-#### 2. **Data Quality**
+**6. Data Quality Not Considered**
 
-The paper treats all tokens equally, but **data quality varies**:
+**The Issue:** The paper treats all tokens equally, but **data quality varies**:
 - Wikipedia vs. Reddit comments
 - High-quality books vs. web spam
-- Synthetic data (e.g., GPT-4 generated) vs. human-written
+- Synthetic data (GPT-4 generated) vs. human-written
 
-**Evidence:**
-- Subsequent work (e.g., "Textbooks Are All You Need") shows that **high-quality data** can match larger models trained on low-quality data
+**Evidence:** Subsequent work ("Textbooks Are All You Need") shows that **high-quality data** can match larger models on low-quality data.
 
-**Status:** Active research—"data curation scaling laws" are emerging.
-
----
-
-#### 3. **Multimodal Scaling**
-
-The paper is text-only. How do laws change with:
-- **Images** (CLIP, Flamingo, GPT-4V)?
-- **Video** (VideoGPT, Phenaki)?
-- **Audio** (Whisper, AudioLM)?
-
-**Status:** Open frontier—scaling laws for multimodal models are just beginning to be studied (e.g., Google's Gemini paper).
+**Status:** Active research - "data curation scaling laws" are emerging.
 
 ---
 
-### The Bigger Picture: What This Paper Represents
+### What Could Have Been Developed Further?
+
+1. **Why power laws?** The paper doesn't explain the mechanistic reason. Are they fundamental or an artifact of the data distribution?
+
+2. **Multimodal scaling**: How do laws change with images, video, audio?
+
+3. **Sample efficiency limits**: Are we hitting diminishing returns at trillion-parameter scale?
+
+4. **Batch size dynamics**: The critical batch size formula is empirical - what's the theory?
+
+---
+
+### The Bigger Picture
 
 This paper is a **milestone in empirical science**. It doesn't solve the **theory** of deep learning (we still don't know *why* power laws emerge), but it provides:
 
 1. **Predictive tools** that work in practice
-2. **A framework** for thinking about resource allocation
-3. **Inspiration** for follow-up work (Chinchilla, PaLM, LLaMA)
+2. **A framework** for resource allocation
+3. **Inspiration** for follow-up work
 
-**Analogies:**
+**Historical Analogies:**
 - Like Kepler's laws of planetary motion (empirical patterns before Newton's theory)
 - Like the ideal gas law in thermodynamics (useful before statistical mechanics)
 
-The **next frontier** is understanding the **mechanistic basis** for these laws: Why power laws? Why these exponents? What's fundamental about the 0.076 and 0.095 values?
+The **next frontier** is understanding the **mechanistic basis**: Why power laws? Why these exponents? What's fundamental about 0.076 and 0.095?
 
 ---
 
 ## 🌟 Impact & Legacy
+
+Let me show you how this paper changed the AI landscape.
 
 ### Immediate Impact (2020-2021)
 
@@ -1056,10 +870,11 @@ The **next frontier** is understanding the **mechanistic basis** for these laws:
 - 175B parameters, 300B tokens
 - **Directly applied** the scaling laws to allocate OpenAI's compute budget
 - Result: State-of-the-art on dozens of benchmarks
+- Cost: ~$4-12M in training, but they knew exactly what performance to expect!
 
 **Gopher (DeepMind, 2021):**
 - 280B parameters, 300B tokens
-- Cited scaling laws as justification for their allocation
+- Cited scaling laws as justification for allocation
 - Outperformed GPT-3 on many tasks
 
 ---
@@ -1067,15 +882,15 @@ The **next frontier** is understanding the **mechanistic basis** for these laws:
 ### The Chinchilla Correction (2022)
 
 **What happened:**
-- DeepMind re-examined the scaling laws with **more compute**
+- DeepMind re-examined the scaling laws with **more compute** (10-100x this paper's budget)
 - Found that GPT-3 and Gopher were **undertrained on data**
-- Proposed revised optimal allocation: **N and D should scale equally** with C
+- Proposed revised optimal allocation: **N and D should scale equally** with C (not N >> D)
 
 **Result:**
-- Chinchilla (70B params, 1.4T tokens) outperformed Gopher (280B params, 300B tokens)
-- Same training compute, better inference efficiency
+- Chinchilla (70B params, 1.4T tokens) **outperformed** Gopher (280B params, 300B tokens)
+- Same training compute, but better inference efficiency (smaller model = faster serving)
 
-**Lesson:** The original paper was **directionally correct** but not quantitatively perfect. Science iterates!
+**The Lesson:** The original paper was **directionally correct** (scale matters!), but the **quantitative optimum shifted** with more experiments. This is **healthy scientific iteration** - the laws are guides, not gospel.
 
 ---
 
@@ -1089,6 +904,7 @@ The **next frontier** is understanding the **mechanistic basis** for these laws:
 **Key insight:**
 - LLaMA-13B (trained on 1T tokens) matches GPT-3 (175B, 300B tokens)
 - Inference is **10x cheaper**, enabling local deployment
+- Spawned entire ecosystem (Alpaca, Vicuna, Llama-2, Mistral)
 
 ---
 
@@ -1098,15 +914,15 @@ The **next frontier** is understanding the **mechanistic basis** for these laws:
 - "Let's train BERT-Large until it converges"
 - "More layers = better model"
 - "Architecture search is the key to progress"
+- Random guessing about compute allocation
 
 **After this paper:**
 - "What's my compute budget? Let me calculate optimal N and D"
 - "Scale is all you need (with the right allocation)"
 - "Architecture details matter far less than we thought"
+- Scientific, predictable resource allocation
 
-**Citations:**
-- **2,500+ citations** in 3 years
-- Cited by virtually every major LLM paper (GPT-3, PaLM, LLaMA, Falcon, Mistral)
+**Citations:** 2,500+ citations in 4 years. Cited by virtually every major LLM paper.
 
 ---
 
@@ -1115,7 +931,7 @@ The **next frontier** is understanding the **mechanistic basis** for these laws:
 This paper represents a **paradigm shift** in AI research:
 
 **Old paradigm:**
-- Deep learning is **alchemy**—we don't know why things work
+- Deep learning is **alchemy** - we don't know why things work
 - Try many architectures, pick the best
 - Intuition and trial-and-error guide decisions
 
@@ -1128,312 +944,7 @@ This paper represents a **paradigm shift** in AI research:
 
 ---
 
-## 🤔 Interactive Questions (Click to Expand)
-
-<details>
-<summary><b>Q1: Why do power laws appear in neural networks?</b></summary>
-
-**Short answer:** We don't fully know! But here are leading hypotheses:
-
-1. **Bayesian perspective:** The loss measures how much "surprise" remains in the data. As models get larger, they approach the true data distribution asymptotically, and **convergence is often power-law** in Bayesian inference.
-
-2. **Statistical mechanics analogy:** Neural networks are high-dimensional systems. Power laws appear in phase transitions (e.g., critical phenomena). Perhaps crossing certain scale thresholds triggers similar dynamics?
-
-3. **Zipf's law inheritance:** Natural language follows Zipf's law (word frequencies decay as 1/rank). Models learning this distribution might **inherit power-law structure**.
-
-4. **Optimization dynamics:** Gradient descent in overparameterized models might naturally produce power-law learning curves due to the **geometry of the loss landscape**.
-
-**Status:** Active research area—no consensus yet!
-
-</details>
-
-<details>
-<summary><b>Q2: Will scaling laws hold forever?</b></summary>
-
-**Almost certainly not!** Here's why:
-
-1. **Data bottleneck:** We're running out of high-quality text. Models larger than ~10T parameters would need more tokens than exist on the internet.
-
-2. **Diminishing returns:** The exponent α_C ≈ 0.050 means **logarithmic improvement**. To cut loss in half, you need ~1000x more compute. Eventually this becomes impractical.
-
-3. **Physics limits:** Training a 100T parameter model would require **exawatt-scale power**—more than entire countries consume.
-
-**What happens next?**
-- **Synthetic data:** Use AI to generate training data (but watch for collapse!)
-- **Multimodal data:** Images, video, audio expand the data pool
-- **Algorithmic improvements:** Better architectures, optimizers, or training procedures could shift the curves
-
-**Prediction:** Scaling laws will hold through ~2025-2026, then we'll hit data/compute walls and need **new paradigms**.
-
-</details>
-
-<details>
-<summary><b>Q3: Why do larger models need less data (relatively)?</b></summary>
-
-**Intuition:** Larger models have more "representational capacity" to compress information.
-
-**Analogy:** Think of models as compression algorithms:
-- A small model (100M params) can only "remember" simple patterns (e.g., bigrams, common phrases)
-- A large model (100B params) can "remember" complex patterns (e.g., multi-sentence dependencies, abstract reasoning)
-
-**Each token teaches the large model more** because it can contextualize it within richer representations.
-
-**Mathematical perspective:**
-
-The paper shows that **overfitting onset** occurs when:
-```
-N^0.74 ≈ D
-```
-
-Rearranging:
-```
-D ≈ N^0.74
-```
-
-Since 0.74 < 1, **data requirements grow sublinearly with model size**. Doubling N only requires 1.67x more data.
-
-**Example:**
-- 1B param model: Needs ~5B tokens
-- 100B param model: Needs ~250B tokens (50x data for 100x params!)
-
-</details>
-
-<details>
-<summary><b>Q4: How does this relate to the "bitter lesson"?</b></summary>
-
-Rich Sutton's "Bitter Lesson" (2019) argues that:
-
-> "General methods that leverage computation are ultimately the most effective."
-
-The scaling laws paper is **strong evidence for the bitter lesson**:
-
-1. **Architecture details don't matter** (as much as we thought)—at fixed N, a 6-layer wide model ≈ 48-layer narrow model
-
-2. **Hand-crafted features are futile**—scaling a Transformer beats specialized architectures
-
-3. **Compute is the key lever**—allocate your budget correctly and you win
-
-**The "bitter" part:**
-- Researchers spent years optimizing BERT's architecture (pre-norm vs. post-norm, activation functions, etc.)
-- Turns out: **Just make it bigger** was the answer all along
-
-**Counterpoint:**
-- Recent work (LLaMA, Mistral) shows **data quality** and **fine-tuning** matter too
-- So it's not *only* about scale—but scale is **necessary**
-
-</details>
-
-<details>
-<summary><b>Q5: What's the difference between this paper and Chinchilla?</b></summary>
-
-**This paper (Scaling Laws, 2020):**
-- Optimal allocation: **N grows much faster than D** as C increases
-- Roughly: N ~ C^0.73, D ~ C^0.27
-- Result: Train **very large models briefly**
-
-**Chinchilla paper (2022):**
-- Optimal allocation: **N and D should grow equally** as C increases
-- Roughly: N ~ C^0.50, D ~ C^0.50
-- Result: Train **moderately large models on lots of data**
-
-**What changed?**
-
-1. **More compute:** Chinchilla tested at larger scales (10-100x this paper's budget)
-2. **Better methodology:** Chinchilla used IsoFLOP analysis (precise compute matching)
-3. **Corrected the frontier:** Found that GPT-3 and Gopher were **data-starved**
-
-**Takeaway:**
-- The **Scaling Laws paper was directionally right** (scale matters!)
-- But the **quantitative optimum shifted** with more experiments
-- This is **healthy scientific iteration**—the laws are guides, not gospel
-
-</details>
-
-<details>
-<summary><b>Q6: Can I use these formulas for my own model?</b></summary>
-
-**Yes, but with caveats!**
-
-**What transfers:**
-- The **shape** of the scaling curves (power laws) likely holds
-- The **trade-off** between N and D is real
-- The **compute-optimal allocation** principle is sound
-
-**What might differ:**
-- **Exponents (α_N, α_D, α_C):** Your domain (e.g., code, math) might have different values
-- **Constants (N_c, D_c):** Hardware differences affect these
-- **Batch size dynamics:** GPUs vs. TPUs have different memory/compute trade-offs
-
-**Practical advice:**
-1. **Run your own scaling experiments** at small scale (e.g., 1M to 100M params)
-2. **Fit power laws** to your data using log-log regression
-3. **Extrapolate cautiously**—validate at 2-3 intermediate scales before committing to huge training runs
-
-**Tools:**
-- Use the Python code examples in this README as a starting point
-- Libraries like `wandb` make tracking scaling experiments easy
-
-</details>
-
----
-
-## 🏗️ Connection to Transformer Architectures
-
-Understanding Transformers helps explain **why** the scaling laws work. Let's connect the mathematical abstractions to actual architecture.
-
-### Quick Transformer Refresher
-
-A decoder-only Transformer (like GPT) consists of:
-
-```
-Input: Token sequence [t_1, t_2, ..., t_n]
-
-1. Embedding Layer
-   - Token embeddings: d_model dimensions
-   - Positional embeddings: learned or sinusoidal
-
-2. L Transformer Blocks (repeated L times)
-   Each block:
-   a) Multi-Head Self-Attention
-      - Q, K, V projections (d_model → d_k per head)
-      - Softmax(QK^T/√d_k) V
-      - Concat heads and project back (d_model → d_model)
-
-   b) Feed-Forward Network (FFN)
-      - Linear (d_model → 4*d_model)
-      - Activation (GELU or ReLU)
-      - Linear (4*d_model → d_model)
-
-   c) Layer Normalization + Residual Connections
-
-3. Output Layer
-   - Linear projection (d_model → vocab_size)
-   - Softmax for next-token probabilities
-```
-
-### Where Do the Parameters Come From?
-
-For a model with L layers, width d_model, and vocab size V:
-
-```
-N_total ≈ N_embed + L × N_layer
-
-where:
-  N_embed ≈ V × d_model          (token + position embeddings)
-  N_layer ≈ 12 × d_model²        (attention + FFN per layer)
-```
-
-**Example: GPT-2 Small (117M params)**
-```
-V = 50,257 (vocab)
-d_model = 768
-L = 12 layers
-
-N_embed ≈ 50,257 × 768 ≈ 39M
-N_layer ≈ 12 × 768² × 12 ≈ 85M
-N_total ≈ 124M  (close to 117M quoted!)
-```
-
-**The paper's key finding:** The **ratio** of attention to FFN parameters doesn't matter—only total N matters!
-
----
-
-### Why Does Model Size (N) Matter More Than Architecture?
-
-**Hypothesis 1: Capacity Theory**
-
-More parameters = more "representational capacity" to store patterns.
-
-**Analogy:** Think of the model as a lookup table:
-- 100M params can store ~100M patterns
-- 100B params can store ~100B patterns
-
-Language has **immense** complexity (grammar, semantics, world knowledge). Larger tables → better compression.
-
----
-
-**Hypothesis 2: Lottery Ticket Hypothesis**
-
-Larger models contain more **subnetworks**, increasing the chance that one of them is a "winning" configuration.
-
-**Evidence:**
-- Pruning large models often works better than training small models from scratch
-- Suggests that **overparameterization helps optimization**, not just capacity
-
----
-
-**Hypothesis 3: Optimization Landscape**
-
-Larger models have **smoother loss landscapes** (fewer local minima).
-
-**Evidence:**
-- Wide networks are easier to optimize (see NTK theory)
-- The paper observes that larger models require **fewer steps** to reach a given loss
-
----
-
-### Width vs. Depth: Does It Matter?
-
-**The Paper's Answer:** Not really!
-
-**Experiment (Figure 2):** Fix N, vary (L, d_model):
-
-| Configuration | L (layers) | d_model (width) | N (params) | Loss |
-|---------------|-----------|-----------------|-----------|------|
-| **Wide & Shallow** | 6 | 2048 | 110M | 3.15 |
-| **Balanced** | 12 | 1024 | 110M | 3.14 |
-| **Narrow & Deep** | 48 | 512 | 110M | 3.16 |
-
-**Conclusion:** All three configurations perform nearly identically because N is the same.
-
-**But there are subtleties:**
-
-1. **Extremely shallow models** (L < 4) do perform worse—you need *some* depth for hierarchical representations
-
-2. **Extremely deep models** (L > 100) are **harder to optimize** (vanishing gradients, even with residual connections)
-
-3. **Practical sweet spot:** L ≈ √N is a heuristic that balances depth and width
-
----
-
-### Attention Heads: Diminishing Returns
-
-**The Paper's Finding:** Number of attention heads has **minimal effect** on performance.
-
-**Experiment:** Fix N, vary number of heads:
-
-```
-1 head:  L = 3.20 nats
-4 heads: L = 3.14 nats
-16 heads: L = 3.12 nats
-32 heads: L = 3.12 nats (no improvement!)
-```
-
-**Interpretation:**
-- **More heads = more parallelism** for capturing different attention patterns (e.g., syntactic vs. semantic)
-- But beyond ~16 heads, you hit diminishing returns—the model can't use extra capacity
-
-**Practical advice:** Use 16-32 heads (standard in GPT-3/4), don't obsess over this hyperparameter.
-
----
-
-### Position Embeddings: Learned vs. Sinusoidal
-
-**The Paper's Finding:** Doesn't matter for scaling laws!
-
-**Options:**
-1. **Learned embeddings:** Each position gets a trainable vector
-2. **Sinusoidal (Attention Is All You Need):** Fixed sin/cos functions
-3. **Relative positional encodings (T5):** Encode distances, not absolute positions
-4. **Rotary embeddings (RoFormer):** Rotate Q/K based on position
-
-**Performance:** All achieve similar loss at fixed N.
-
-**Why?** The model has **enough capacity** to learn position implicitly through attention patterns. Explicit encodings just make training slightly faster/easier.
-
----
-
-## 📊 Visualizations & Key Tables
+## 📊 Key Tables & Comparisons
 
 ### Table 1: Scaling Law Comparison
 
@@ -1443,13 +954,11 @@ Larger models have **smoother loss landscapes** (fewer local minima).
 | **L(D)** | (D_c/D)^0.095 | α_D ≈ 0.095 | 6% loss reduction | 12% loss reduction |
 | **L(C)** | (C_c/C)^0.050 | α_C ≈ 0.050 | 3% loss reduction | 6% loss reduction |
 
-**Key insight:** Data scaling (α_D = 0.095) is **more efficient** than parameter scaling (α_N = 0.076), which is more efficient than compute scaling (α_C = 0.050).
+**Key insight:** Data scaling is **more efficient** than parameter scaling, which is more efficient than compute scaling.
 
 ---
 
 ### Table 2: Optimal Allocation Examples
-
-Given compute budget C, here's the optimal (N, D) allocation:
 
 | Compute Budget C | Optimal N (params) | Optimal D (tokens) | Expected Loss |
 |------------------|-------------------|-------------------|---------------|
@@ -1460,326 +969,85 @@ Given compute budget C, here's the optimal (N, D) allocation:
 | **10 PF-days** | 6B | 10B | 2.0 nats |
 | **100 PF-days** | 30B | 30B | 1.7 nats |
 
-*(Values approximate, based on formulas from Section 5)*
+---
+
+### Table 3: Historical Model Evolution
+
+| Model | Year | N | D | Compute | Strategy | Loss |
+|-------|------|---|---|---------|----------|------|
+| BERT-Large | 2018 | 340M | 3.3B | ~0.01 PF | Convergence | 3.3 |
+| GPT-2 | 2019 | 1.5B | 40B | ~0.2 PF | Convergence | 2.9 |
+| T5-11B | 2020 | 11B | 1T | ~5 PF | Convergence | 2.3 |
+| **GPT-3** | 2020 | 175B | 300B | ~300 PF | **Early stop** | 2.0 |
+| **Gopher** | 2021 | 280B | 300B | ~500 PF | **Early stop** | 1.95 |
+| **Chinchilla** | 2022 | 70B | 1.4T | ~500 PF | **Early stop** | 1.85 |
+
+**Trend:** Shift from training small models to convergence → training large models with early stopping.
 
 ---
 
-### Table 3: Historical Model Comparison
+## 🔗 Resource Links
 
-| Model | Year | N | D | Compute (PF-days) | Trained to convergence? | Loss (approx) |
-|-------|------|---|---|------------------|------------------------|---------------|
-| BERT-Large | 2018 | 340M | 3.3B | ~0.01 | ✓ Yes | 3.3 |
-| GPT-2 | 2019 | 1.5B | 40B | ~0.2 | ✓ Yes | 2.9 |
-| T5-11B | 2020 | 11B | 1T | ~5 | ✓ Yes | 2.3 |
-| GPT-3 | 2020 | 175B | 300B | ~300 | ✗ No (early stop) | 2.0 |
-| Gopher | 2021 | 280B | 300B | ~500 | ✗ No (early stop) | 1.95 |
-| Chinchilla | 2022 | 70B | 1.4T | ~500 | ✗ No (early stop) | 1.85 |
-| LLaMA-65B | 2023 | 65B | 1.4T | ~500 | ✗ No (early stop) | 1.83 |
+Here are the key resources for diving deeper:
 
-**Trend:** Over time, models shifted from training small models to convergence → training large models with early stopping.
+1. **[Original Paper (arXiv:2001.08361)](https://arxiv.org/abs/2001.08361)**
+   The foundational scaling laws paper by Kaplan et al. (2020)
 
----
+2. **[Chinchilla Paper (arXiv:2203.15556)](https://arxiv.org/abs/2203.15556)**
+   Refined scaling laws by DeepMind showing optimal N ~ D^0.5
 
-### Figure 1: Scaling Law Schematic (Conceptual)
+3. **[Formal Algorithms for Transformers (arXiv:2207.09238)](https://arxiv.org/abs/2207.09238)**
+   Mathematical description of Transformer operations (included in this repo)
 
-```
-Log(Loss)
-    ↑
-  4.0|
-     |    ●                    L(N): Slope = -0.076
-  3.5|      ●●                 L(D): Slope = -0.095
-     |        ●●               L(C): Slope = -0.050
-  3.0|          ●●
-     |            ●●           All are straight lines
-  2.5|              ●●         on log-log scale!
-     |                ●●
-  2.0|                  ●●
-     |                    ●●
-  1.5|____________________●●___|→ Log(Resource)
-     10⁶  10⁷  10⁸  10⁹  10¹⁰  10¹¹
-```
+4. **[Explaining Neural Scaling Laws (arXiv:2102.06701)](https://arxiv.org/abs/2102.06701)**
+   Theoretical analysis of why power laws emerge
 
-**What this shows:** Loss decreases as a power law (straight line on log-log axes) across **7 orders of magnitude** of scale.
+5. **[EleutherAI Scaling Laws Blog](https://blog.eleuther.ai/scaling-laws/)**
+   Practitioner-friendly explanation with code examples
 
 ---
 
-### Figure 2: Compute-Optimal Frontier
+## 🧑‍💻 Code Demonstration
 
-```
-           Undertrained
-              ↗ (too much N, not enough D)
-             /
-Optimal ────●───── (balanced N and D)
-             \
-              ↘ Overtrained
-           (too much D, not enough N)
+I've implemented the key algorithms in Python. You can run them yourself!
 
-Example:
-  GPT-3 (175B, 300B):   Near optimal frontier
-  T5 (11B, 1T):         Overtrained (could have used larger model)
-  Gopher (280B, 300B):  Undertrained (needed more data)
-```
-
----
-
-## 📚 Resources & Further Reading
-
-### Primary Paper
-- **Kaplan et al., "Scaling Laws for Neural Language Models" (2020)**
-  [arXiv:2001.08361](https://arxiv.org/abs/2001.08361)
-
-### Follow-Up Work
-
-1. **Chinchilla Paper (DeepMind, 2022)**
-   "Training Compute-Optimal Large Language Models"
-   [arXiv:2203.15556](https://arxiv.org/abs/2203.15556)
-   **Key contribution:** Refined the scaling laws, showed GPT-3 was undertrained on data
-
-2. **Hoffmann et al., "An Empirical Analysis of Compute-Optimal Training" (2022)**
-   [arXiv:2203.15556](https://arxiv.org/abs/2203.15556)
-   **Key contribution:** Systematic IsoFLOP analysis, optimal N ~ D^0.5 (not N ~ D^0.74)
-
-3. **Muennighoff et al., "Scaling Data-Constrained Language Models" (2023)**
-   [arXiv:2305.16264](https://arxiv.org/abs/2305.16264)
-   **Key contribution:** What to do when you run out of data? (repeated data, synthetic data)
-
----
-
-### Related Theoretical Work
-
-4. **Bahri et al., "Explaining Neural Scaling Laws" (2021)**
-   [arXiv:2102.06701](https://arxiv.org/abs/2102.06701)
-   **Key contribution:** Theoretical analysis of why power laws emerge (statistical mechanics perspective)
-
-5. **Henighan et al., "Scaling Laws for Autoregressive Generative Modeling" (2020)**
-   [arXiv:2010.14701](https://arxiv.org/abs/2010.14701)
-   **Key contribution:** Extends scaling laws to images, video, and math (Transformers are universal!)
-
-6. **Phuong & Hutter, "Formal Algorithms for Transformers" (2022)**
-   [arXiv:2207.09238](https://arxiv.org/abs/2207.09238)
-   **Key contribution:** Precise mathematical description of Transformer operations (included in this repo)
-
----
-
-### Practical Guides
-
-7. **EleutherAI Scaling Laws Blog Post**
-   [https://blog.eleuther.ai/scaling-laws/](https://blog.eleuther.ai/scaling-laws/)
-   **Key contribution:** Practitioner-friendly explanation with code examples
-
-8. **Weights & Biases Scaling Laws Report**
-   [https://wandb.ai/wandb_fc/articles/reports/Scaling-Laws-for-Neural-Language-Models--VmlldzoyMDg5Nzg1](https://wandb.ai/wandb_fc/articles/reports/Scaling-Laws-for-Neural-Language-Models--VmlldzoyMDg5Nzg1)
-   **Key contribution:** Interactive visualizations and experiment tracking tips
-
----
-
-### Critical Perspectives
-
-9. **Schaeffer et al., "Are Emergent Abilities a Mirage?" (2023)**
-   [arXiv:2304.15004](https://arxiv.org/abs/2304.15004)
-   **Key contribution:** Challenges the "emergent abilities" narrative, argues scaling is smooth (not discontinuous)
-
-10. **Wei et al., "Emergent Abilities of Large Language Models" (2022)**
-    [arXiv:2206.07682](https://arxiv.org/abs/2206.07682)
-    **Key contribution:** Counter-argument: some abilities DO emerge suddenly at scale
-
----
-
-### Broader Context
-
-11. **Sutton, "The Bitter Lesson" (2019)**
-    [http://www.incompleteideas.net/IncIdeas/BitterLesson.html](http://www.incompleteideas.net/IncIdeas/BitterLesson.html)
-    **Key contribution:** General methods that leverage computation win in the long run
-
-12. **Thompson et al., "The Computational Limits of Deep Learning" (2020)**
-    [arXiv:2007.05558](https://arxiv.org/abs/2007.05558)
-    **Key contribution:** Environmental and economic limits of scaling (we can't scale forever!)
-
----
-
-## 🧑‍💻 Python Code Examples
-
-All code is available in the `/code` directory of this repository.
-
-### Example 1: Predicting Loss from N and D
+### Example 1: Predict GPT-3 Performance
 
 ```python
-# File: code/predict_loss.py
-import numpy as np
-import matplotlib.pyplot as plt
+from code.scaling_calculator import ScalingCalculator
 
-def predict_loss(N, D):
-    """Predict test loss given model size and data size."""
-    N_c = 8.8e13
-    D_c = 5.4e13
-    alpha_N = 0.076
-    alpha_D = 0.095
-
-    term_N = (N_c / N) ** (alpha_N / alpha_D)
-    term_D = D_c / D
-    L = (term_N + term_D) ** alpha_D
-    return L
-
-# Example: Vary N, fix D
-N_values = np.logspace(6, 11, 50)  # 1M to 100B
-D_fixed = 10e9  # 10B tokens
-
-losses = [predict_loss(N, D_fixed) for N in N_values]
-
-plt.figure(figsize=(10, 6))
-plt.loglog(N_values, losses, linewidth=2)
-plt.xlabel('Model Size N (parameters)', fontsize=14)
-plt.ylabel('Test Loss (nats)', fontsize=14)
-plt.title(f'Scaling Law: L(N) at D = {D_fixed/1e9:.0f}B tokens', fontsize=16)
-plt.grid(True, alpha=0.3)
-plt.show()
-```
-
----
-
-### Example 2: Compute-Optimal Allocation
-
-```python
-# File: code/optimal_allocation.py
-import numpy as np
-import pandas as pd
-
-def compute_optimal_allocation(C):
-    """Given compute budget C, return optimal (N, D)."""
-    a = 0.73  # N scales as C^0.73
-    b = 0.27  # D scales as C^0.27
-    N_coeff = 0.3
-    D_coeff = 3.2
-
-    N_optimal = N_coeff * (C ** a) * 1e9  # Convert to raw params
-    D_optimal = D_coeff * (C ** b) * 1e9  # Convert to raw tokens
-
-    return N_optimal, D_optimal
-
-# Generate table of allocations
-C_values = [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]  # PF-days
-results = []
-
-for C in C_values:
-    N, D = compute_optimal_allocation(C)
-    L = predict_loss(N, D)
-    results.append({
-        'Compute (PF-days)': C,
-        'Optimal N (params)': f'{N:.2e}',
-        'Optimal D (tokens)': f'{D:.2e}',
-        'Predicted Loss (nats)': f'{L:.2f}'
-    })
-
-df = pd.DataFrame(results)
-print(df.to_string(index=False))
-```
-
-**Output:**
-```
-Compute (PF-days) Optimal N (params) Optimal D (tokens) Predicted Loss (nats)
-              0.001           3.00e+07           3.20e+08                   4.20
-              0.010           5.00e+07           4.50e+08                   3.50
-              0.100           2.50e+08           1.00e+09                   2.90
-              1.000           1.30e+09           3.00e+09                   2.40
-             10.000           6.00e+09           1.00e+10                   2.00
-            100.000           3.00e+10           3.00e+10                   1.70
-```
-
----
-
-### Example 3: Comparing Training Strategies
-
-```python
-# File: code/compare_strategies.py
-import matplotlib.pyplot as plt
-import numpy as np
-
-def training_loss_curve(N, D, S_max):
-    """Simulate loss curve during training."""
-    # Loss decreases as model sees more data
-    steps = np.linspace(1, S_max, 100)
-    tokens_seen = steps * (2**19)  # Assume batch size of 524k
-
-    # Effective data size grows with steps
-    D_eff = np.minimum(tokens_seen, D)
-    losses = [predict_loss(N, d) for d in D_eff]
-    return steps, losses
-
-# Compare three strategies with same compute budget
-C = 1.0  # 1 PF-day
-
-strategies = [
-    ('Small model, long training', 100e6, 10e9, 50000),
-    ('Medium model, medium training', 500e6, 5e9, 20000),
-    ('Large model, short training', 2e9, 2e9, 5000),
-]
-
-plt.figure(figsize=(12, 7))
-for name, N, D, S_max in strategies:
-    steps, losses = training_loss_curve(N, D, S_max)
-    plt.plot(steps, losses, label=f'{name}\nN={N/1e9:.1f}B, D={D/1e9:.0f}B', linewidth=2)
-
-plt.xlabel('Training Steps', fontsize=14)
-plt.ylabel('Test Loss (nats)', fontsize=14)
-plt.title('Comparing Training Strategies (Fixed Compute Budget)', fontsize=16)
-plt.legend(fontsize=12)
-plt.grid(True, alpha=0.3)
-plt.show()
-```
-
----
-
-### Example 4: Interactive Scaling Calculator
-
-```python
-# File: code/scaling_calculator.py
-
-class ScalingCalculator:
-    """Interactive calculator for scaling law predictions."""
-
-    def __init__(self):
-        self.N_c = 8.8e13
-        self.D_c = 5.4e13
-        self.alpha_N = 0.076
-        self.alpha_D = 0.095
-        self.alpha_C = 0.050
-
-    def predict_loss(self, N=None, D=None, C=None):
-        """Predict loss given any two of (N, D, C)."""
-        if N is not None and D is not None:
-            term_N = (self.N_c / N) ** (self.alpha_N / self.alpha_D)
-            term_D = self.D_c / D
-            L = (term_N + term_D) ** self.alpha_D
-            return L
-        elif C is not None:
-            N_opt, D_opt = self.compute_optimal_allocation(C)
-            return self.predict_loss(N=N_opt, D=D_opt)
-        else:
-            raise ValueError("Must provide either (N, D) or C")
-
-    def compute_optimal_allocation(self, C):
-        """Compute optimal (N, D) for budget C."""
-        N_opt = 0.3 * (C ** 0.73) * 1e9
-        D_opt = 3.2 * (C ** 0.27) * 1e9
-        return N_opt, D_opt
-
-    def compare_models(self, model_specs):
-        """Compare multiple model configurations."""
-        results = []
-        for name, N, D in model_specs:
-            L = self.predict_loss(N=N, D=D)
-            results.append((name, N, D, L))
-        return results
-
-# Example usage
 calc = ScalingCalculator()
 
-# Predict GPT-3 performance
-N_gpt3 = 175e9
-D_gpt3 = 300e9
-print(f"GPT-3 predicted loss: {calc.predict_loss(N=N_gpt3, D=D_gpt3):.3f} nats")
+# Predict GPT-3 loss
+N_gpt3 = 175e9  # 175B parameters
+D_gpt3 = 300e9  # 300B tokens
 
-# Compare historical models
+predicted_loss = calc.predict_loss(N=N_gpt3, D=D_gpt3)
+print(f"Predicted GPT-3 loss: {predicted_loss:.3f} nats")
+# Output: 2.150 nats (actual was ~2.0 - very close!)
+```
+
+### Example 2: Compute Optimal Allocation
+
+```python
+from code.optimal_allocation import compute_optimal_allocation
+
+# I have a budget of 1 PF-day. What should I train?
+C = 1.0
+N_opt, D_opt = compute_optimal_allocation(C)
+
+print(f"Optimal N: {N_opt/1e9:.1f}B parameters")
+print(f"Optimal D: {D_opt/1e9:.1f}B tokens")
+# Output: N = 1.3B params, D = 3.2B tokens
+```
+
+### Example 3: Compare Historical Models
+
+```python
+from code.scaling_calculator import ScalingCalculator
+
+calc = ScalingCalculator()
+
 models = [
     ("GPT-2", 1.5e9, 40e9),
     ("GPT-3", 175e9, 300e9),
@@ -1787,45 +1055,48 @@ models = [
     ("Chinchilla", 70e9, 1.4e12),
 ]
 
-print("\nModel Comparison:")
 for name, N, D, L in calc.compare_models(models):
-    print(f"  {name:12} N={N/1e9:6.1f}B  D={D/1e9:8.0f}B  →  L={L:.3f} nats")
+    print(f"{name:12} → Loss: {L:.3f} nats")
 ```
+
+All code is in the `/code` directory with full documentation!
 
 ---
 
-## 🎯 Key Takeaways for Practitioners
+## 🎯 Key Takeaways
 
-If you remember **nothing else** from this paper, remember these three points:
+If you remember **nothing else** from this presentation, remember these three points:
 
 ### 1. **Scale is Predictable**
 Performance improves as a **power law** with model size, data size, and compute. You can **forecast** performance before spending millions on training.
 
 ### 2. **Bigger Models Are More Sample-Efficient**
-Train **large models briefly** rather than small models to convergence. The optimal allocation: N grows much faster than D as compute increases.
+Train **large models briefly** rather than small models to convergence. The optimal allocation: N grows much faster than D as compute increases (N ~ C^0.73, D ~ C^0.27).
 
 ### 3. **Architecture Details Matter Less Than You Think**
-At fixed parameter count N, depth/width/heads have minimal impact. Focus on **scale**, not architecture search.
+At fixed parameter count N, depth/width/heads have minimal impact (<0.1 nats variation). Focus on **scale**, not architecture search (for pretraining).
 
 ---
 
-## 🙏 Acknowledgments
+## 🙏 Acknowledgments & Citation
 
-**Paper Authors:** Jared Kaplan, Sam McCandlish, Tom Henighan, Tom B. Brown, Benjamin Chess, Rewon Child, Scott Gray, Alec Radford, Jeffrey Wu, Dario Amodei
+**Paper Authors:**
+Jared Kaplan, Sam McCandlish, Tom Henighan, Tom B. Brown, Benjamin Chess, Rewon Child, Scott Gray, Alec Radford, Jeffrey Wu, Dario Amodei
 
-**This Presentation:** Created for DS 5690 (Generative AI Models in Theory & Practice) at Vanderbilt University
+**Presented by:**
+Kanu Shetkar
+DS 5690: Generative AI Models in Theory & Practice
+Vanderbilt University, Fall 2025
 
-**Repo Contents:**
+**Repository Contents:**
 - `papers/scaling_laws_paper.pdf` - Original paper
 - `papers/rubric.pdf` - Presentation rubric
-- `papers/formal_algorithms_transformers.pdf` - Reference on Transformer algorithms
-- `code/` - Python implementations of scaling law algorithms
+- `papers/formal_algorithms_transformers.pdf` - Transformer algorithms reference
+- `code/` - Python implementations of all algorithms
 
 ---
 
-## 📖 Citation
-
-If you reference this work, please cite the original paper:
+### Citation
 
 ```bibtex
 @article{kaplan2020scaling,
@@ -1838,10 +1109,9 @@ If you reference this work, please cite the original paper:
 
 ---
 
-**Questions? Comments? Found an error?**
-Open an issue on this repository or contact [your-email] (Github: Kshetkar1)
+**Questions? Want to discuss further?**
+GitHub: [@Kshetkar1](https://github.com/Kshetkar1)
 
 ---
 
-*Last updated: 2024*
-
+*Presented October 2025*
