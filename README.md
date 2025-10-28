@@ -130,35 +130,105 @@ And this is why GPT-3—with 175 billion parameters trained on 300 billion token
 
 ---
 
-## 🤖 The Formal Algorithm
+## 🤖 Formal Algorithms for Scaling Laws
 
-Now let's get a bit more technical. How do you actually use these scaling laws in practice?
+Now let's get technical. Here are the core algorithms that implement the scaling laws, presented in formal pseudocode.
 
-Here's the key algorithm. If you're a practitioner and you have a compute budget C, this is how you find the optimal model size and dataset size:
+### Algorithm 1: Compute-Optimal Resource Allocation
 
-```
-FUNCTION ComputeOptimalAllocation(C):
-    // These are the scaling exponents from the paper
-    a ← 0.73  // How N scales with C
-    b ← 0.27  // How D scales with C
+This is the central algorithm—given a fixed compute budget, determine the optimal model size and dataset size.
 
-    // These coefficients depend on your hardware
-    N_coeff ← 0.3
-    D_coeff ← 3.2
+**Input:** $C \in \mathbb{R}^+$ (compute budget in PetaFLOP-days)
 
-    // Calculate optimal allocations
-    N_optimal ← N_coeff × C^0.73
-    D_optimal ← D_coeff × C^0.27
+**Parameters:**
+- $\alpha_N = 0.73$ (scaling exponent: how $N$ scales with $C$)
+- $\alpha_D = 0.27$ (scaling exponent: how $D$ scales with $C$)
+- $k_N = 0.3$ (hardware-dependent coefficient for parameters)
+- $k_D = 3.2$ (hardware-dependent coefficient for data)
 
-    RETURN (N_optimal, D_optimal)
-END
-```
+**Output:** $(N_{\text{optimal}}, D_{\text{optimal}})$ (optimal parameters and tokens)
 
-Let's walk through an example. Say you have a budget of 1 PetaFLOP-day. Plug that in:
-- N_optimal = 0.3 × 1^0.73 ≈ **1.3 billion parameters**
-- D_optimal = 3.2 × 1^0.27 ≈ **3.2 billion tokens**
+**Algorithm:**
 
-Before spending $4 million on training GPT-3, OpenAI could use this formula to **predict its performance** to within 0.05 nats. That's incredibly powerful!
+1. $N_{\text{optimal}} \leftarrow k_N \times C^{\alpha_N}$ $\triangleright$ Compute optimal model size
+2. $D_{\text{optimal}} \leftarrow k_D \times C^{\alpha_D}$ $\triangleright$ Compute optimal dataset size
+3. $C_{\text{actual}} \leftarrow \frac{6 \times N_{\text{optimal}} \times D_{\text{optimal}}}{10^{15}}$ $\triangleright$ Verify FLOP constraint
+4. **if** $\frac{|C_{\text{actual}} - C|}{C} > 0.1$ **then**
+5. &nbsp;&nbsp;&nbsp;&nbsp;Print "Warning: Allocation deviates from budget by >10%"
+6. **end if**
+7. **return** $(N_{\text{optimal}}, D_{\text{optimal}})$
+
+**Example:** With $C = 1.0$ PetaFLOP-day:
+- $N_{\text{optimal}} = 0.3 \times 1^{0.73} \approx$ **1.3 billion parameters**
+- $D_{\text{optimal}} = 3.2 \times 1^{0.27} \approx$ **3.2 billion tokens**
+
+**Key Property:** This formula let OpenAI predict GPT-3's performance before spending $4M—accurate to within 0.05 nats!
+
+---
+
+### Algorithm 2: Predict Loss from Resources
+
+Given model size and data size, predict the final test loss before training.
+
+**Input:**
+- $N \in \mathbb{R}^+$ (number of parameters)
+- $D \in \mathbb{R}^+$ (number of training tokens)
+
+**Parameters:**
+- $N_c = 8.8 \times 10^{13}$ (critical parameter count)
+- $D_c = 5.4 \times 10^{13}$ (critical token count)
+- $\alpha_N = 0.076$ (power law exponent for $N$)
+- $\alpha_D = 0.095$ (power law exponent for $D$)
+
+**Output:** $L \in \mathbb{R}^+$ (predicted test loss in nats)
+
+**Algorithm:**
+
+1. $\text{term}_N \leftarrow \left(\frac{N_c}{N}\right)^{\alpha_N / \alpha_D}$ $\triangleright$ Parameter constraint contribution
+2. $\text{term}_D \leftarrow \frac{D_c}{D}$ $\triangleright$ Data constraint contribution
+3. $L \leftarrow (\text{term}_N + \text{term}_D)^{\alpha_D}$ $\triangleright$ Bottleneck formula
+4. **return** $L$
+
+**Key Property:** Loss is determined by the *bottleneck* resource. If $N$ is too small or $D$ is too small, that constraint dominates.
+
+**Complexity:** $O(1)$ - constant time prediction
+
+---
+
+### Algorithm 3: Early Stopping Criterion
+
+Determine when to stop training—critical for compute efficiency.
+
+**Input:**
+- $N \in \mathbb{R}^+$ (current model size in parameters)
+- $S \in \mathbb{N}$ (current training step)
+- $B \in \mathbb{N}$ (batch size in tokens per step)
+- $C_{\text{budget}} \in \mathbb{R}^+$ (total compute budget in PetaFLOP-days)
+
+**Output:** $\text{stop} \in \{\text{True}, \text{False}\}$ (whether to stop training)
+
+**Algorithm:**
+
+1. $C_{\text{used}} \leftarrow \frac{6 \times N \times B \times S}{10^{15}}$ $\triangleright$ Compute used so far
+2. $\text{tokens}_{\text{seen}} \leftarrow B \times S$ $\triangleright$ Total tokens processed
+3. $(N_{\text{opt}}, D_{\text{opt}}) \leftarrow$ ComputeOptimalAllocation$(C_{\text{budget}})$ $\triangleright$ Get optimal allocations
+4. **if** $C_{\text{used}} \geq C_{\text{budget}}$ **then**
+5. &nbsp;&nbsp;&nbsp;&nbsp;**return** True $\triangleright$ Budget exhausted
+6. **end if**
+7. **if** $N \approx N_{\text{opt}}$ **and** $\text{tokens}_{\text{seen}} \geq D_{\text{opt}}$ **then**
+8. &nbsp;&nbsp;&nbsp;&nbsp;**return** True $\triangleright$ Optimal token count reached
+9. **end if**
+10. **if** $N > 2 \times N_{\text{opt}}$ **then**
+11. &nbsp;&nbsp;&nbsp;&nbsp;Print "Warning: Model too large for budget"
+12. &nbsp;&nbsp;&nbsp;&nbsp;**return** True $\triangleright$ Severely overtrained model
+13. **end if**
+14. **return** False $\triangleright$ Continue training
+
+**Key Property:** Traditional practice trains to convergence ($D \to \infty$). Scaling laws say: **stop early**! Training GPT-3 to convergence would waste 100x compute.
+
+**Complexity:** $O(1)$ - constant time check per training step
+
+---
 
 ### The Architecture Finding
 
@@ -166,9 +236,9 @@ Here's something else that shocked everyone. The paper tested wildly different T
 - A wide, shallow model: 6 layers with 2048 dimensions
 - A narrow, deep model: 48 layers with 512 dimensions
 
-Both had the same total parameter count N. And you know what? They performed **nearly identically**—less than 0.1 nats difference!
+Both had the same total parameter count $N$. And you know what? They performed **nearly identically**—less than 0.1 nats difference!
 
-The conclusion? At fixed N, **architecture details matter far less than everyone thought**. Scale dominates everything.
+**Conclusion:** At fixed $N$, **architecture details matter far less than everyone thought**. Scale dominates everything.
 
 ---
 
@@ -249,6 +319,8 @@ And then Meta took this even further with LLaMA in 2023. They trained smaller mo
 
 Now let me be critical for a moment. What are the limitations of this work?
 
+### Key Limitations
+
 **1. Dataset Homogeneity**
 All experiments used English web text (WebText2). Do these laws hold for:
 - Non-English languages, especially low-resource ones?
@@ -274,16 +346,87 @@ Some capabilities—like chain-of-thought reasoning—seem to **suddenly appear*
 **5. Inference Costs**
 The paper optimizes training compute but completely ignores inference compute. GPT-3 with 175B parameters is expensive to serve. Chinchilla with 70B is way cheaper, even if training cost was similar.
 
+### What the Authors Overlooked
+
+Beyond the limitations above, here are specific things the original paper **didn't account for** that later research revealed:
+
+**1. Data Quality Matters More Than Assumed**
+The paper treats all tokens equally—Wikipedia, books, Reddit comments, all the same. But research since 2020 shows:
+- High-quality data (textbooks, academic papers) gives **5-10x better sample efficiency**
+- The Phi models from Microsoft achieve GPT-3 level performance with 100x fewer parameters by using curated data
+- The scaling exponents change significantly with data quality
+
+**2. The Data Wall Problem**
+The paper assumed unlimited high-quality text. But:
+- The entire internet has ~5 trillion high-quality tokens
+- GPT-4 scale models need 10+ trillion tokens by these laws
+- We're hitting fundamental data scarcity—overlooked in the original analysis
+
+**3. Transfer and Fine-Tuning Dynamics**
+The paper briefly mentions transfer but doesn't deeply explore it. Critical omissions:
+- How do scaling laws change after instruction-tuning?
+- Do smaller, heavily fine-tuned models beat larger base models?
+- LLaMA-2-7B with RLHF can match GPT-3-175B on some tasks!
+
+**4. Critical Batch Size Regime**
+While the paper identifies critical batch size, it underestimates its importance:
+- Training stability issues at very large scales
+- Gradient noise dynamics are more complex than predicted
+- Learning rate schedules interact with batch size in ways not captured
+
+**5. Architectural Innovations at Scale**
+The claim that "architecture doesn't matter" held up to 1.5B parameters but breaks down beyond:
+- Sparse attention becomes necessary for long context
+- Mixture-of-Experts unlocks different scaling regimes
+- Flash Attention and other optimizations are required at trillion-parameter scale
+
+### Have Others Disputed the Findings?
+
+Yes! The scaling laws have been refined and contested:
+
+**1. The Chinchilla Revision (2022)** - Most Significant Dispute
+
+DeepMind directly challenged the original allocation:
+- Original: N ~ C^0.73, D ~ C^0.27 (parameters dominate)
+- Chinchilla: N ~ C^0.50, D ~ C^0.50 (equal scaling!)
+- Evidence: Chinchilla-70B on 1.4T tokens beats Gopher-280B on 300B tokens
+
+**Why the discrepancy?** OpenAI tested up to ~1 PetaFLOP-day. DeepMind tested up to 100 PetaFLOP-days. The scaling exponents themselves change with scale!
+
+**2. The Emergent Abilities Debate**
+
+Some researchers argue power laws are misleading:
+- Schaeffer et al. (2023): "Emergent abilities are a mirage"
+- Claim: Smooth scaling looks discontinuous due to poor metrics
+- Counter-claim: Chain-of-thought really does emerge suddenly
+- **Still unresolved** in the community
+
+**3. Data Scaling vs Model Scaling**
+
+Multiple groups found data scaling may be more important:
+- LLaMA: Overtrain on tokens (1T tokens for 7B params violates scaling laws)
+- Result: Better performance than predicted, cheaper inference
+- Suggests: At production scale, data efficiency > pure scaling law optimization
+
+**4. Open Compute Estimation**
+
+Researchers questioned whether compute estimates are correct:
+- The "6ND" approximation for FLOPs may be off by 2x
+- Backward pass costs vary by architecture
+- Mixed precision training changes compute accounting
+
 ### The Bigger Picture
 
 This paper is a **milestone in empirical science**. It doesn't solve the **theory** of deep learning—we still don't know *why* power laws emerge. But it gives us:
-- Predictive tools that work in practice
-- A framework for resource allocation
+- Predictive tools that work in practice (even if not perfect)
+- A framework for resource allocation (refined by Chinchilla)
 - Inspiration for all the follow-up work
 
 It's like Kepler's laws of planetary motion—empirical patterns that came before Newton's theory gave us the mechanistic understanding.
 
-And the **legacy**? Over 2,500 citations in just a few years. Changed how the entire industry thinks about resource allocation.
+**The verdict?** The paper was **directionally correct**—scale matters enormously!—but the **quantitative details** have been disputed and refined. The exponents change with scale, data quality matters more than assumed, and architecture innovations unlock different regimes.
+
+And the **legacy**? Over 2,500 citations in just a few years. Changed how the entire industry thinks about resource allocation, even as we refine the details.
 
 ---
 
