@@ -75,27 +75,6 @@ L(C) = (Cc / C)^0.050
 
 ---
 
-## 🤔 Question 1: Optimal Strategy
-
-**You have compute to train a 1B parameter model on 100B tokens. Which is best?**
-
-**A)** Train 1B model on all 100B tokens until convergence
-**B)** Train 10B model on 10B tokens, stop early
-**C)** Train 100M model on 1T tokens
-
-<details>
-<summary><b>Click for answer</b></summary>
-
-**Answer: B** — Train the 10B model on 10B tokens!
-
-**Why?** Larger models are **sample-efficient**. They learn more from each token.
-
-This is why GPT-3 (175B params, 300B tokens) beat models trained to convergence on more data.
-
-</details>
-
----
-
 ## 🤖 Formal Algorithms
 
 ### Algorithm 1: Compute-Optimal Resource Allocation
@@ -158,7 +137,7 @@ This is why GPT-3 (175B params, 300B tokens) beat models trained to convergence 
 
 ---
 
-## 🤔 Question 2: Wide vs Narrow Architecture
+## 🤔 Question 1: Wide vs Narrow Architecture
 
 **You have a budget of 100 million parameters. Which architecture performs better?**
 
@@ -192,7 +171,7 @@ This held from 768K to 1.5B parameters. At 100B+ scale, architecture innovations
 
 ---
 
-## 🤔 Question 3: Why Architecture Still Matters?
+## 🤔 Question 2: Why Architecture Still Matters?
 
 If architecture size barely matters, why do labs spend time on architecture search?
 
