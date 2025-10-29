@@ -34,8 +34,6 @@ OpenAI trained **400+ models** across **7 orders of magnitude** of scale.
 ---
 
 ## 📊 The Three Scaling Laws
-<img width="416" height="212" alt="image" src="https://github.com/user-attachments/assets/c14ef1fe-6ad0-44c5-8ffb-08be400db7b1" />
-
 
 ### Law 1: Performance vs Model Size
 ```
@@ -64,6 +62,7 @@ L(C) = (Cc / C)^0.050
 
 **Translation**: For every 10x compute, use **5.4x more parameters** but only **2x more data**.
 
+<img width="416" height="212" alt="image" src="https://github.com/user-attachments/assets/c14ef1fe-6ad0-44c5-8ffb-08be400db7b1" />
 ---
 
 ## 💡 Key Insight
