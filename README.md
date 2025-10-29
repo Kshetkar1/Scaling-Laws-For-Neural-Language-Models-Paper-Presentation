@@ -101,35 +101,6 @@ This directly enabled GPT-3, GPT-4, Gopher, and all the modern LLMs we use today
 
 ---
 
-## 🤔 Question for the Class
-
-Alright, before we go deeper, let me ask you all something. Think about this for a second.
-
-**You have enough compute to train a 1 billion parameter model on 100 billion tokens until it fully converges. Which of these strategies do you think would give you the best final performance?**
-
-**A)** Train that 1B parameter model on all 100B tokens until loss stops improving
-**B)** Train a 10B parameter model (10x bigger!) on just 10B tokens and stop early
-**C)** Train a tiny 100M parameter model on 1 trillion tokens (10x more data!)
-
-Take a moment. What's your gut instinct?
-
-<details>
-<summary><b>Click here for the answer</b></summary>
-
-The answer is **B**—train the 10 billion parameter model on 10 billion tokens!
-
-I know, I know. It feels wrong, right? You're thinking: "Wait, that model is seeing way less data. How can it be better?"
-
-Here's why it works. Larger models are what we call **sample-efficient**. They extract more value from each token they see. So even though the 10B model sees less data overall, it learns more from what it does see.
-
-This is exactly what the scaling laws predict. Remember those exponents? N ~ C^0.73, D ~ C^0.27. The model size grows much faster than the data size.
-
-And this is why GPT-3—with 175 billion parameters trained on 300 billion tokens—outperformed models that were trained to convergence on way more data. It's all about that sample efficiency.
-
-</details>
-
----
-
 ## 🤖 Formal Algorithms for Scaling Laws
 
 Now let's get technical. Here are the core algorithms that implement the scaling laws, presented in formal pseudocode.
@@ -230,6 +201,33 @@ Determine when to stop training—critical for compute efficiency.
 
 ---
 
+ Question 1: Wide vs Narrow Architecture
+Before we discuss the architecture findings, let me ask you something:
+Imagine you have a fixed budget of 100 million parameters. Which architecture do you think would perform better?
+Option A: Wide and Shallow
+
+6 layers
+2048 dimensions per layer
+Total: ~100M parameters
+
+Option B: Narrow and Deep
+
+48 layers
+512 dimensions per layer
+Total: ~100M parameters
+
+Take 30 seconds to think about it. Which one would you choose and why?
+<details>
+<summary>Click here for the surprising answer</summary>
+The Answer: They perform almost identically!
+The paper tested exactly this scenario and found that at the same parameter count N, the two models had less than 0.1 nats difference in loss.
+Key Finding: Architecture shape (wide vs. narrow, shallow vs. deep) matters far less than the total parameter count.
+This was shocking because conventional wisdom said "deeper is always better" or "wider networks generalize better." But the scaling laws showed: just count the parameters, not how they're arranged.
+Important caveat: This finding held from 768K to 1.5B parameters in their experiments. At larger scales (100B+ parameters), architecture innovations like sparse attention and Mixture-of-Experts do become important for different reasons (efficiency, context length, etc.).
+</details>
+
+---
+
 ### The Architecture Finding
 
 Here's something else that shocked everyone. The paper tested wildly different Transformer architectures:
@@ -244,7 +242,7 @@ Both had the same total parameter count $N$. And you know what? They performed *
 
 ## 🤔 Second Question
 
-This brings me to another question. If architecture barely matters, why do modern AI labs like Google, Meta, and OpenAI still spend so much time and effort on architecture search and optimization?
+This brings me to another question. If architecture size barely matters, why do modern AI labs like Google, Meta, and OpenAI still spend so much time and effort on architecture search and optimization?
 
 Think about it. We just said scale is what matters. So why all the fuss about architecture?
 
@@ -488,7 +486,7 @@ Performance follows power laws. You can forecast performance before spending mil
 **2. Bigger Models Are Sample-Efficient**
 Train large models briefly rather than small models to convergence. The optimal allocation: N grows much faster than D as compute increases.
 
-**3. Architecture Matters Less Than You Think**
+**3. Architecture Size Matters Less Than You Think**
 At fixed parameter count, depth and width have minimal impact. For pretraining, focus on scale, not architecture search.
 
 ---
