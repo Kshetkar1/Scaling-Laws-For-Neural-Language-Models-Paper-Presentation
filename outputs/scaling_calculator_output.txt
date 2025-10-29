@@ -1,0 +1,27 @@
+============================================================
+SCALING CALCULATOR DEMO
+============================================================
+
+1. Predicting GPT-3 performance:
+   GPT-3 (N=175B, D=300B)
+   Predicted loss: 1.732 nats
+   Actual loss: ~2.0 nats ✓ Very close!
+
+2. Comparing historical models:
+   Model           N (B)        D (B)        Loss      
+   --------------------------------------------------
+   GPT-2                   1.5          40     2.345
+   GPT-3                 175.0         300     1.732
+   Gopher                280.0         300     1.708
+   Chinchilla             70.0        1400     1.740
+
+3. How much better is 10x the parameters?
+   Small (1B): 2.484 nats
+   Large (10B): 2.314 nats
+   Improvement: 6.9%
+
+4. What should I train with my compute budget?
+   Budget: 1.0 PF-days
+   Optimal N: 0.3B parameters
+   Optimal D: 3.2B tokens
+   Expected loss: 2.740 nats

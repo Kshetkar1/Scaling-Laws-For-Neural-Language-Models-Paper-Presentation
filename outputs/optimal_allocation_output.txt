@@ -1,0 +1,26 @@
+============================================================
+OPTIMAL ALLOCATION TABLE
+============================================================
+ Compute (PF-days) Optimal N (params) Optimal D (tokens) Predicted Loss (nats)
+             0.001           1.94e+06           4.96e+08                  3.85
+             0.010           1.04e+07           9.23e+08                  3.41
+             0.100           5.59e+07           1.72e+09                  3.04
+             1.000           3.00e+08           3.20e+09                  2.74
+            10.000           1.61e+09           5.96e+09                  2.50
+           100.000           8.65e+09           1.11e+10                  2.30
+
+============================================================
+COMPARING STRATEGIES (C = 1.0 PF-days)
+============================================================
+       Strategy N (params) D (tokens) Loss (nats)
+        Optimal   3.00e+08   3.20e+09       2.740
+Over-allocate N   9.00e+08   1.07e+09       2.846
+Over-allocate D   1.00e+08   9.60e+09       2.855
+
+============================================================
+KEY INSIGHTS:
+============================================================
+1. As compute increases, N grows MUCH faster than D
+   (N ~ C^0.73 vs D ~ C^0.27)
+2. Over-allocating to N hurts less than over-allocating to D
+3. The optimal frontier balances N and D to minimize loss

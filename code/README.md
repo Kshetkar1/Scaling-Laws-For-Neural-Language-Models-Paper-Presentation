@@ -2,6 +2,25 @@
 
 This directory contains Python implementations of the key algorithms and formulas from the paper "Scaling Laws for Neural Language Models" (Kaplan et al., 2020).
 
+## 🚀 Quick Start - Run All Demos
+
+**To generate ALL outputs at once (recommended for presentation):**
+
+```bash
+python3 run_all_demos.py
+```
+
+This will:
+- ✅ Run all code examples
+- ✅ Generate text outputs (predictions, tables, comparisons)
+- ✅ Create visualizations (4 plots showing scaling laws)
+- ✅ Save everything to `../outputs/` directory
+- ✅ Create a summary report
+
+**All outputs will be saved to the `outputs/` folder for use during your presentation!**
+
+---
+
 ## Files
 
 ### 1. `predict_loss.py`
@@ -93,6 +112,31 @@ visualize_optimal_frontier()
 - `training_loss_curve(N, D, S_max)` - Simulate training trajectory
 - `compare_training_strategies(C)` - Plot comparison of strategies
 - `visualize_optimal_frontier()` - Plot N vs D with historical models
+
+---
+
+### 5. `run_all_demos.py` ⭐ **NEW - Comprehensive Demo**
+Run all examples and save outputs for presentation.
+
+**Usage:**
+```bash
+python3 run_all_demos.py
+```
+
+**What it does:**
+- Runs all 4 code files above
+- Saves text outputs to `../outputs/`
+- Saves 4 visualizations as PNG files
+- Creates a summary report (DEMO_SUMMARY.md)
+- **Perfect for generating presentation materials!**
+
+**Outputs:**
+- `scaling_calculator_output.txt` - Calculator results
+- `optimal_allocation_output.txt` - Allocation tables
+- `scaling_law_N.png` - Loss vs model size plot
+- `scaling_law_D.png` - Loss vs data size plot
+- `training_strategies.png` - Strategy comparison plot
+- `optimal_frontier.png` - Historical models plot
 
 ---
 
